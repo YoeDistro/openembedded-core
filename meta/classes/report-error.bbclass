@@ -36,6 +36,7 @@ def get_conf_data(e, filename):
                     continue
                 else:
                     jsonstring=jsonstring + line
+    jsonstring = jsonstring.replace("<", "&lt;").replace(">", "&gt;")
     return jsonstring
 
 python errorreport_handler () {
