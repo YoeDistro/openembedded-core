@@ -15,5 +15,12 @@ SRC_URI += "\
     file://0006-cmd-dist-separate-host-and-target-builds.patch \
     file://0007-cmd-go-make-GOROOT-precious-by-default.patch \
     file://0008-use-GOBUILDMODE-to-set-buildmode.patch \
+    \
+    file://0001-cmd-link-add-support-for-external-linking-on-linux-r.patch \
+    file://0002-cmd-link-cmd-internal-obj-riscv-add-TLS-support-for-.patch \
+    file://0003-cmd-compile-cmd-internal-obj-riscv-move-g-register-o.patch \
+    file://0004-cmd-dist-cmd-go-runtime-add-support-for-cgo-on-linux.patch \
+    file://0005-cmd-compile-cmd-internal-sys-enable-non-exe-build-mo.patch \
 "
+
 SRC_URI[main.sha256sum] = "540c0ab7781084d124991321ed1458e479982de94454a98afab6acadf38497c2"
