@@ -152,6 +152,7 @@ class KickStart():
         part.add_argument('--offset', type=sizetype("K", True))
         part.add_argument('--exclude-path', nargs='+')
         part.add_argument('--include-path', nargs='+')
+        part.add_argument('--change-directory')
         part.add_argument("--extra-space", type=sizetype("M"))
         part.add_argument('--fsoptions', dest='fsopts')
         part.add_argument('--fstype', default='vfat',
@@ -228,6 +229,23 @@ class KickStart():
                                 err = "%s:%d: SquashFS does not support LABEL" \
                                        % (confpath, lineno)
                                 raise KickStartError(err)
+                        if parsed.fstype == 'msdos' or parsed.fstype == 'vfat':
+                            if parsed.fsuuid:
+                                if parsed.fsuuid.upper().startswith('0X'):
+                                    if len(parsed.fsuuid) > 10:
+                                        err = "%s:%d: fsuuid %s given in wks kickstart file " \
+                                              "exceeds the length limit for %s filesystem. " \
+                                              "It should be in the form of a 32 bit hexadecimal" \
+                                              "number (for example, 0xABCD1234)." \
+                                              % (confpath, lineno, parsed.fsuuid, parsed.fstype)
+                                        raise KickStartError(err)
+                                elif len(parsed.fsuuid) > 8:
+                                    err = "%s:%d: fsuuid %s given in wks kickstart file " \
+                                          "exceeds the length limit for %s filesystem. " \
+                                          "It should be in the form of a 32 bit hexadecimal" \
+                                          "number (for example, 0xABCD1234)." \
+                                          % (confpath, lineno, parsed.fsuuid, parsed.fstype)
+                                    raise KickStartError(err)
                         if parsed.use_label and not parsed.label:
                             err = "%s:%d: Must set the label with --label" \
                                   % (confpath, lineno)

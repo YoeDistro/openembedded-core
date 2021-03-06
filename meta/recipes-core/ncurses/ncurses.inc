@@ -16,7 +16,8 @@ inherit autotools binconfig-disabled multilib_header pkgconfig
 SRC_URI = "git://salsa.debian.org/debian/ncurses.git;protocol=https"
 
 EXTRA_AUTORECONF = "-I m4"
-CONFIG_SITE =+ "${WORKDIR}/config.cache"
+
+CACHED_CONFIGUREVARS = "cf_cv_func_nanosleep=yes"
 
 EXTRASITECONFIG = "CFLAGS='${CFLAGS} -I${SYSROOT_DESTDIR}${includedir}'"
 
@@ -306,7 +307,7 @@ FILES_${PN}-tools = "\
 "
 
 # 'reset' is a symlink to 'tset' which is in the 'ncurses' package
-RDEPENDS_${PN}-tools = "${PN}"
+RDEPENDS_${PN}-tools = "${PN} ${PN}-terminfo-base"
 
 FILES_${PN}-terminfo = "\
   ${datadir}/terminfo \
@@ -318,3 +319,8 @@ FILES_${PN}-terminfo-base = "\
 
 RSUGGESTS_${PN}-libtinfo = "${PN}-terminfo"
 RRECOMMENDS_${PN}-libtinfo = "${PN}-terminfo-base"
+
+# Putting terminfo into the sysroot adds around 2800 files to
+# each recipe specific sysroot. We can live without this, particularly
+# as many recipes may have native and target copies.
+SYSROOT_DIRS_remove = "${datadir}"

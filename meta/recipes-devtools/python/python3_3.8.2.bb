@@ -312,11 +312,8 @@ do_create_manifest() {
 }
 
 # bitbake python -c create_manifest
-addtask do_create_manifest
-
 # Make sure we have native python ready when we create a new manifest
-do_create_manifest[depends] += "${PN}:do_prepare_recipe_sysroot"
-do_create_manifest[depends] += "${PN}:do_patch"
+addtask do_create_manifest after do_patch do_prepare_recipe_sysroot
 
 # manual dependency additions
 RRECOMMENDS_${PN}-core_append_class-nativesdk = " nativesdk-python3-modules"
@@ -360,3 +357,9 @@ RDEPENDS_${PN}-dev = ""
 
 RDEPENDS_${PN}-tests_append_class-target = " bash"
 RDEPENDS_${PN}-tests_append_class-nativesdk = " bash"
+
+# Python's tests contain large numbers of files we don't need in the recipe sysroots
+SYSROOT_PREPROCESS_FUNCS += " py3_sysroot_cleanup"
+py3_sysroot_cleanup () {
+	rm -rf ${SYSROOT_DESTDIR}${libdir}/python${PYTHON_MAJMIN}/test
+}
