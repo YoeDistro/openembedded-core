@@ -1,4 +1,4 @@
-From 732d4f4954fe60718870048d0583a20a7a8a8540 Mon Sep 17 00:00:00 2001
+From 8c797f2f6d9107f0f8f8d94332536bf48c098821 Mon Sep 17 00:00:00 2001
 From: Khem Raj <raj.khem@gmail.com>
 Date: Fri, 3 Aug 2018 09:55:12 -0700
 Subject: [PATCH] nativesdk-glibc: Make relocatable install for locales
@@ -67,7 +67,7 @@ index b3d4da0185..22f9dc1140 100644
  /* Load the locale data for CATEGORY from the file specified by *NAME.
     If *NAME is "", use environment variables as specified by POSIX, and
 diff --git a/locale/programs/locale.c b/locale/programs/locale.c
-index 575b208e82..5ec630c3a4 100644
+index ca0a95be99..6b98895203 100644
 --- a/locale/programs/locale.c
 +++ b/locale/programs/locale.c
 @@ -632,6 +632,7 @@ nameentcmp (const void *a, const void *b)
