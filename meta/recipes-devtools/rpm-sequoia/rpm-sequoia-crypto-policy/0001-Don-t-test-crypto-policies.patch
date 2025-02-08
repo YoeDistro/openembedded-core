@@ -1,0 +1,52 @@
+From 8491263ad74ce0f30af033ea6e2679212ce197f5 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Zolt=C3=A1n=20B=C3=B6sz=C3=B6rm=C3=A9nyi?=
+ <zboszor@gmail.com>
+Date: Sat, 8 Feb 2025 07:23:28 +0100
+Subject: [PATCH] Don't test crypto policies
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Assume that the policies are good as they are committed.
+The CI for fedora-crypto-policies ensures this.
+
+Upstream-Status: Inappropriate [Yocto specific]
+Signed-off-by: Zoltán Böszörményi <zboszor@gmail.com>
+---
+ python/build-crypto-policies.py | 20 ++++++++------------
+ 1 file changed, 8 insertions(+), 12 deletions(-)
+
+diff --git a/python/build-crypto-policies.py b/python/build-crypto-policies.py
+index a75b6f6..f1107ba 100755
+--- a/python/build-crypto-policies.py
++++ b/python/build-crypto-policies.py
+@@ -104,18 +104,14 @@ def build_policy(cmdline, policy_name, subpolicy_names=None):
+         gen = cls()
+         config = gen.generate_config(ucp)
+ 
+-        if policy_name in {'EMPTY', 'GOST-ONLY'} or gen.test_config(config):
+-            try:
+-                name = ':'.join([policy_name, *subpolicy_names])
+-                if not save_config(cmdline, name, gen.CONFIG_NAME, config):
+-                    err = 5
+-            except OSError:
+-                eprint('Error saving config for ' + gen.CONFIG_NAME)
+-                eprint('Keeping original configuration')
+-                err = 4
+-        else:
+-            eprint('Error testing config for ' + gen.CONFIG_NAME)
+-            err = 3
++        try:
++            name = ':'.join([policy_name, *subpolicy_names])
++            if not save_config(cmdline, name, gen.CONFIG_NAME, config):
++                err = 5
++        except OSError:
++            eprint('Error saving config for ' + gen.CONFIG_NAME)
++            eprint('Keeping original configuration')
++            err = 4
+     return err
+ 
+ 
+-- 
+2.48.1
+
