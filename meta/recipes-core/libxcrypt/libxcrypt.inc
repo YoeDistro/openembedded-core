@@ -16,7 +16,7 @@ PROVIDES = "virtual/crypt"
 
 BUILD_CPPFLAGS = "-I${STAGING_INCDIR_NATIVE}"
 TARGET_CPPFLAGS = "-I${STAGING_DIR_TARGET}${includedir} -Wno-error"
-CPPFLAGS:append:class-nativesdk = " -Wno-error"
+CPPFLAGS:append:class-nativesdk = " -Wno-error -Wno-error -Wno-error=incompatible-pointer-types-discards-qualifiers"
 
 API = "--disable-obsolete-api"
 EXTRA_OECONF += "${API}"

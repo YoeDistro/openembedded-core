@@ -1,0 +1,38 @@
+From e7db6dac09b900dea696ed55c6f370b48b33fba7 Mon Sep 17 00:00:00 2001
+From: Khem Raj <raj.khem@gmail.com>
+Date: Wed, 5 Nov 2025 10:07:42 -0800
+Subject: [PATCH] version: Bump version to 2.43
+
+Make it behave like a release, so OE packages do not trip
+over development versioning scheme
+
+Upstream-Status: Inappropriate [ OE Testing only ]
+Signed-off-by: Khem Raj <raj.khem@gmail.com>
+---
+ include/features.h | 2 +-
+ version.h          | 2 +-
+ 2 files changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/include/features.h b/include/features.h
+index 173a9d1585..c080ad4260 100644
+--- a/include/features.h
++++ b/include/features.h
+@@ -529,7 +529,7 @@
+ /* Major and minor version number of the GNU C library package.  Use
+    these macros to test for features in specific releases.  */
+ #define	__GLIBC__	2
+-#define	__GLIBC_MINOR__	42
++#define	__GLIBC_MINOR__	43
+ 
+ #define __GLIBC_PREREQ(maj, min) \
+ 	((__GLIBC__ << 16) + __GLIBC_MINOR__ >= ((maj) << 16) + (min))
+diff --git a/version.h b/version.h
+index c5dcdde2db..5408e8b0a1 100644
+--- a/version.h
++++ b/version.h
+@@ -1,4 +1,4 @@
+ /* This file just defines the current version number of libc.  */
+ 
+ #define RELEASE "development"
+-#define VERSION "2.42.9000"
++#define VERSION "2.43"
