@@ -1,4 +1,4 @@
-From 86e15dc8bc5c4756bc6fa9326226ada7721b8c3c Mon Sep 17 00:00:00 2001
+From 348ff1cd00f7ad227020a2b80a7eded5b61eabf7 Mon Sep 17 00:00:00 2001
 From: Khem Raj <raj.khem@gmail.com>
 Date: Wed, 18 Mar 2015 00:49:28 +0000
 Subject: [PATCH] eglibc: Help bootstrap cross toolchain

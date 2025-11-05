@@ -1,4 +1,4 @@
-From ac8410f1f87a9b93107a0d6a46707fbe4532d154 Mon Sep 17 00:00:00 2001
+From e8a3f3878434d138c7fc6d107bdbf2e72a3fb50e Mon Sep 17 00:00:00 2001
 From: Khem Raj <raj.khem@gmail.com>
 Date: Wed, 18 Mar 2015 01:33:49 +0000
 Subject: [PATCH] eglibc: Forward port cross locale generation support
@@ -23,7 +23,7 @@ Signed-off-by: Khem Raj <raj.khem@gmail.com>
  create mode 100644 locale/catnames.c
 
 diff --git a/locale/Makefile b/locale/Makefile
-index 9d9c1a7691..bf271fd0a8 100644
+index 66b9a16e25..af50838c86 100644
 --- a/locale/Makefile
 +++ b/locale/Makefile
 @@ -30,6 +30,7 @@ headers = \
@@ -146,7 +146,7 @@ index e635a01ede..10e34a6da9 100644
    return NULL;
  }
 diff --git a/locale/programs/ld-collate.c b/locale/programs/ld-collate.c
-index 7de3ba064d..3256427d21 100644
+index e9a9e6dc34..18247630ff 100644
 --- a/locale/programs/ld-collate.c
 +++ b/locale/programs/ld-collate.c
 @@ -352,7 +352,7 @@ new_element (struct locale_collate_t *collate, const char *mbs, size_t mbslen,

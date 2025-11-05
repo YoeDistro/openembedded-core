@@ -1,4 +1,4 @@
-From 8a67937e136ba22f062802c1df276604b3f58579 Mon Sep 17 00:00:00 2001
+From 80d0f190dc171b7027522b57e802a28d2a4abc08 Mon Sep 17 00:00:00 2001
 From: Khem Raj <raj.khem@gmail.com>
 Date: Wed, 18 Mar 2015 00:31:06 +0000
 Subject: [PATCH] 'yes' within the path sets wrong config variables

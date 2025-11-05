@@ -1,4 +1,4 @@
-From 3bc3bbda6092b1b6d497d24e319a10b4c8c48caf Mon Sep 17 00:00:00 2001
+From 8b4b4c2b2ef4f1f75831583d2844e80e7d5a24ed Mon Sep 17 00:00:00 2001
 From: Khem Raj <raj.khem@gmail.com>
 Date: Wed, 18 Mar 2015 01:51:38 +0000
 Subject: [PATCH] nativesdk-glibc: Raise the size of arrays containing dl paths
@@ -41,7 +41,7 @@ index f9ca40de3f..407db2aa54 100644
  _dl_cache_libcmp (const char *p1, const char *p2)
  {
 diff --git a/elf/dl-load.c b/elf/dl-load.c
-index d331e0f01a..ee024f7136 100644
+index ced8ee7cbd..eb1df81da5 100644
 --- a/elf/dl-load.c
 +++ b/elf/dl-load.c
 @@ -107,8 +107,8 @@ enum { ncapstr = 1, max_capstrlen = 0 };
@@ -98,7 +98,7 @@ index cc49e13c86..394c1ce0c5 100644
 +const char __invoke_dynamic_linker__[4096] __attribute__ ((section (".interp")))
    = RUNTIME_LINKER;
 diff --git a/elf/ldconfig.c b/elf/ldconfig.c
-index 39b154c72c..c1014b773b 100644
+index a83f256df2..397d9cfb4c 100644
 --- a/elf/ldconfig.c
 +++ b/elf/ldconfig.c
 @@ -150,6 +150,8 @@ static struct argp argp =
@@ -111,7 +111,7 @@ index 39b154c72c..c1014b773b 100644
  static error_t
  parse_opt (int key, char *arg, struct argp_state *state)
 diff --git a/elf/rtld.c b/elf/rtld.c
-index 493f9696ea..2ae4a5d28b 100644
+index 5ea5383eb6..62045dbc0c 100644
 --- a/elf/rtld.c
 +++ b/elf/rtld.c
 @@ -189,6 +189,7 @@ dso_name_valid_for_suid (const char *p)
