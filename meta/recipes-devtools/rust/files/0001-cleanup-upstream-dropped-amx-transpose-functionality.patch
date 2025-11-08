@@ -1,0 +1,77 @@
+From efb9a41f0ecdf432b9e163806d6714f53f090bd8 Mon Sep 17 00:00:00 2001
+From: Augie Fackler <augie@google.com>
+Date: Fri, 31 Oct 2025 13:47:57 -0400
+Subject: [PATCH] cleanup: upstream dropped amx-transpose functionality
+
+See also LLVM change 5322fb626820. Looks like this was
+just removed entirely.
+
+Upstream-Status: Backport [https://github.com/rust-lang/rust/commit/efb9a41f0ecdf432b9e163806d6714f53f090bd8]
+Signed-off-by: Khem Raj <raj.khem@gmail.com>
+---
+ compiler/rustc_target/src/target_features.rs | 1 -
+ library/std_detect/src/detect/arch/x86.rs    | 3 ---
+ library/std_detect/src/detect/os/x86.rs      | 1 -
+ library/std_detect/tests/x86-specific.rs     | 1 -
+ tests/ui/check-cfg/target_feature.stderr     | 1 -
+ 5 files changed, 7 deletions(-)
+
+--- a/compiler/rustc_target/src/target_features.rs
++++ b/compiler/rustc_target/src/target_features.rs
+@@ -386,7 +386,6 @@ static X86_FEATURES: &[(&str, Stability,
+     ("amx-movrs", Unstable(sym::x86_amx_intrinsics), &["amx-tile"]),
+     ("amx-tf32", Unstable(sym::x86_amx_intrinsics), &["amx-tile"]),
+     ("amx-tile", Unstable(sym::x86_amx_intrinsics), &[]),
+-    ("amx-transpose", Unstable(sym::x86_amx_intrinsics), &["amx-tile"]),
+     ("apxf", Unstable(sym::apx_target_feature), &[]),
+     ("avx", Stable, &["sse4.2"]),
+     ("avx2", Stable, &["avx"]),
+--- a/library/std_detect/src/detect/arch/x86.rs
++++ b/library/std_detect/src/detect/arch/x86.rs
+@@ -93,7 +93,6 @@ features! {
+     /// * `"amx-fp8"`
+     /// * `"amx-movrs"`
+     /// * `"amx-tf32"`
+-    /// * `"amx-transpose"`
+     /// * `"f16c"`
+     /// * `"fma"`
+     /// * `"bmi1"`
+@@ -231,8 +230,6 @@ features! {
+     /// AMX-MOVRS (Matrix MOVERS operations)
+     @FEATURE: #[unstable(feature = "x86_amx_intrinsics", issue = "126622")] amx_tf32: "amx-tf32";
+     /// AMX-TF32 (TensorFloat32 Operations)
+-    @FEATURE: #[unstable(feature = "x86_amx_intrinsics", issue = "126622")] amx_transpose: "amx-transpose";
+-    /// AMX-TRANSPOSE (Matrix Transpose Operations)
+     @FEATURE: #[unstable(feature = "apx_target_feature", issue = "139284")] apxf: "apxf";
+     /// APX-F (Advanced Performance Extensions - Foundation)
+     @FEATURE: #[unstable(feature = "avx10_target_feature", issue = "138843")] avx10_1: "avx10.1";
+--- a/library/std_detect/src/detect/os/x86.rs
++++ b/library/std_detect/src/detect/os/x86.rs
+@@ -285,7 +285,6 @@ pub(crate) fn detect_features() -> cache
+                             unsafe { __cpuid_count(0x1e_u32, 1) };
+ 
+                         enable(amx_feature_flags_eax, 4, Feature::amx_fp8);
+-                        enable(amx_feature_flags_eax, 5, Feature::amx_transpose);
+                         enable(amx_feature_flags_eax, 6, Feature::amx_tf32);
+                         enable(amx_feature_flags_eax, 7, Feature::amx_avx512);
+                         enable(amx_feature_flags_eax, 8, Feature::amx_movrs);
+--- a/library/std_detect/tests/x86-specific.rs
++++ b/library/std_detect/tests/x86-specific.rs
+@@ -76,7 +76,6 @@ fn dump() {
+     println!("widekl: {:?}", is_x86_feature_detected!("widekl"));
+     println!("movrs: {:?}", is_x86_feature_detected!("movrs"));
+     println!("amx-fp8: {:?}", is_x86_feature_detected!("amx-fp8"));
+-    println!("amx-transpose: {:?}", is_x86_feature_detected!("amx-transpose"));
+     println!("amx-tf32: {:?}", is_x86_feature_detected!("amx-tf32"));
+     println!("amx-avx512: {:?}", is_x86_feature_detected!("amx-avx512"));
+     println!("amx-movrs: {:?}", is_x86_feature_detected!("amx-movrs"));
+--- a/tests/ui/check-cfg/target_feature.stderr
++++ b/tests/ui/check-cfg/target_feature.stderr
+@@ -27,7 +27,6 @@ LL |     cfg!(target_feature = "_UNEXPEC
+ `amx-movrs`
+ `amx-tf32`
+ `amx-tile`
+-`amx-transpose`
+ `apxf`
+ `atomics`
+ `avx`

@@ -8,6 +8,9 @@ SRC_URI += "https://static.rust-lang.org/dist/rustc-${RUST_VERSION}-src.tar.xz;n
             file://0001-src-core-build_steps-tool.rs-switch-off-lto-for-rust.patch;patchdir=${RUSTSRC} \
             file://revert-link-std-statically-in-rustc_driver-feature.patch;patchdir=${RUSTSRC} \
             file://0001-riscv32-Define-plain-syscalls-as-their-time64-varian.patch;patchdir=${RUSTSRC} \
+            file://0001-cleanup-upstream-dropped-amx-transpose-functionality.patch;patchdir=${RUSTSRC} \
+            file://0001-rustc_target-aarch64-Remove-deprecated-FEAT_TME.patch;patchdir=${RUSTSRC} \
+            file://150394.patch;patchdir=${RUSTSRC} \
 "
 SRC_URI[rust.sha256sum] = "ebee170bfe4c4dfc59521a101de651e5534f4dae889756a5c97ca9ea40d0c307"
 
