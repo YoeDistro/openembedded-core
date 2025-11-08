@@ -1,0 +1,540 @@
+From a5659e08201f4b331bc5ae77fcb0ac51412af615 Mon Sep 17 00:00:00 2001
+From: Matthew Maurer <mmaurer@google.com>
+Date: Fri, 14 Nov 2025 18:51:07 +0000
+Subject: [PATCH] rustc_target: aarch64: Remove deprecated FEAT_TME
+
+ARM has withdrawn FEAT_TME
+
+https://developer.arm.com/documentation/102105/lb-05/
+
+LLVM has dropped support for it recently as a result.
+
+Upstream-Status: Submitted [https://github.com/rust-lang/rust/pull/148951]
+Signed-off-by: Khem Raj <raj.khem@gmail.com>
+---
+ compiler/rustc_codegen_llvm/src/llvm_util.rs  |   1 +
+ library/std/tests/run-time-detect.rs          |   1 -
+ library/std_detect/src/detect/os/aarch64.rs   |   1 -
+ library/std_detect/tests/cpu-detection.rs     |   2 -
+ .../aarch64-unknown-linux-gnu/Dockerfile      |   3 +-
+ .../aarch64_be-unknown-linux-gnu/Dockerfile   |   1 -
+ .../crates/core_arch/src/aarch64/mod.rs       |   4 -
+ .../crates/core_arch/src/aarch64/tme.rs       | 201 ------------------
+ .../crates/stdarch-test/src/disassembly.rs    |   2 +-
+ .../crates/stdarch-verify/tests/arm.rs        |   1 -
+ 10 files changed, 3 insertions(+), 214 deletions(-)
+ delete mode 100644 library/stdarch/crates/core_arch/src/aarch64/tme.rs
+
+--- a/compiler/rustc_codegen_llvm/src/llvm_util.rs
++++ b/compiler/rustc_codegen_llvm/src/llvm_util.rs
+@@ -59,15 +59,22 @@ unsafe fn configure_llvm(sess: &Session)
+     }
+ 
+     fn llvm_arg_to_arg_name(full_arg: &str) -> &str {
+-        full_arg.trim().split(|c: char| c == '=' || c.is_whitespace()).next().unwrap_or("")
++        full_arg
++            .trim()
++            .split(|c: char| c == '=' || c.is_whitespace())
++            .next()
++            .unwrap_or("")
+     }
+ 
+     let cg_opts = sess.opts.cg.llvm_args.iter().map(AsRef::as_ref);
+     let tg_opts = sess.target.llvm_args.iter().map(AsRef::as_ref);
+     let sess_args = cg_opts.chain(tg_opts);
+ 
+-    let user_specified_args: FxHashSet<_> =
+-        sess_args.clone().map(|s| llvm_arg_to_arg_name(s)).filter(|s| !s.is_empty()).collect();
++    let user_specified_args: FxHashSet<_> = sess_args
++        .clone()
++        .map(|s| llvm_arg_to_arg_name(s))
++        .filter(|s| !s.is_empty())
++        .collect();
+ 
+     {
+         // This adds the given argument to LLVM. Unless `force` is true
+@@ -93,7 +100,12 @@ unsafe fn configure_llvm(sess: &Session)
+             add("-generate-arange-section", false);
+         }
+ 
+-        match sess.opts.unstable_opts.merge_functions.unwrap_or(sess.target.merge_functions) {
++        match sess
++            .opts
++            .unstable_opts
++            .merge_functions
++            .unwrap_or(sess.target.merge_functions)
++        {
+             MergeFunctions::Disabled | MergeFunctions::Trampolines => {}
+             MergeFunctions::Aliases => {
+                 add("-mergefunc-use-aliases", false);
+@@ -113,7 +125,10 @@ unsafe fn configure_llvm(sess: &Session)
+ 
+         // HACK(eddyb) LLVM inserts `llvm.assume` calls to preserve align attributes
+         // during inlining. Unfortunately these may block other optimizations.
+-        add("-preserve-alignment-assumptions-during-inlining=false", false);
++        add(
++            "-preserve-alignment-assumptions-during-inlining=false",
++            false,
++        );
+ 
+         // Use non-zero `import-instr-limit` multiplier for cold callsites.
+         add("-import-cold-multiplier=0.1", false);
+@@ -179,14 +194,20 @@ pub(crate) struct LLVMFeature<'a> {
+ 
+ impl<'a> LLVMFeature<'a> {
+     fn new(llvm_feature_name: &'a str) -> Self {
+-        Self { llvm_feature_name, dependencies: SmallVec::new() }
++        Self {
++            llvm_feature_name,
++            dependencies: SmallVec::new(),
++        }
+     }
+ 
+     fn with_dependencies(
+         llvm_feature_name: &'a str,
+         dependencies: SmallVec<[TargetFeatureFoldStrength<'a>; 1]>,
+     ) -> Self {
+-        Self { llvm_feature_name, dependencies }
++        Self {
++            llvm_feature_name,
++            dependencies,
++        }
+     }
+ }
+ 
+@@ -247,6 +268,7 @@ pub(crate) fn to_llvm_features<'a>(sess:
+         ("aarch64", "fp16") => Some(LLVMFeature::new("fullfp16")),
+         // Filter out features that are not supported by the current LLVM version
+         ("aarch64", "fpmr") => None, // only existed in 18
++        ("aarch64", "tme") => None,  // Withdrawn by ARM; removed from LLVM
+         ("arm", "fp16") => Some(LLVMFeature::new("fullfp16")),
+         // Filter out features that are not supported by the current LLVM version
+         ("loongarch32" | "loongarch64", "32s") if major < 21 => None,
+@@ -416,7 +438,11 @@ pub(crate) fn print_version() {
+ pub(crate) fn get_version() -> (u32, u32, u32) {
+     // Can be called without initializing LLVM
+     unsafe {
+-        (llvm::LLVMRustVersionMajor(), llvm::LLVMRustVersionMinor(), llvm::LLVMRustVersionPatch())
++        (
++            llvm::LLVMRustVersionMajor(),
++            llvm::LLVMRustVersionMinor(),
++            llvm::LLVMRustVersionPatch(),
++        )
+     }
+ }
+ 
+@@ -486,7 +512,10 @@ fn print_target_cpus(sess: &Session, tm:
+     };
+     let mut cpus = cpu_names
+         .lines()
+-        .map(|cpu_name| Cpu { cpu_name, remark: make_remark(cpu_name) })
++        .map(|cpu_name| Cpu {
++            cpu_name,
++            remark: make_remark(cpu_name),
++        })
+         .collect::<VecDeque<_>>();
+ 
+     // Only print the "native" entry when host and target are the same arch,
+@@ -523,14 +552,16 @@ fn print_target_features(sess: &Session,
+             // LLVM asserts that these are sorted. LLVM and Rust both use byte comparison for these
+             // strings.
+             let llvm_feature = to_llvm_features(sess, *feature)?.llvm_feature_name;
+-            let desc =
+-                match llvm_target_features.binary_search_by_key(&llvm_feature, |(f, _d)| f).ok() {
+-                    Some(index) => {
+-                        known_llvm_target_features.insert(llvm_feature);
+-                        llvm_target_features[index].1
+-                    }
+-                    None => "",
+-                };
++            let desc = match llvm_target_features
++                .binary_search_by_key(&llvm_feature, |(f, _d)| f)
++                .ok()
++            {
++                Some(index) => {
++                    known_llvm_target_features.insert(llvm_feature);
++                    llvm_target_features[index].1
++                }
++                None => "",
++            };
+ 
+             Some((*feature, desc))
+         })
+@@ -557,19 +588,41 @@ fn print_target_features(sess: &Session,
+     for (feature, desc) in &rustc_target_features {
+         writeln!(out, "    {feature:max_feature_len$} - {desc}.").unwrap();
+     }
+-    writeln!(out, "\nCode-generation features supported by LLVM for this target:").unwrap();
++    writeln!(
++        out,
++        "\nCode-generation features supported by LLVM for this target:"
++    )
++    .unwrap();
+     for (feature, desc) in &llvm_target_features {
+         writeln!(out, "    {feature:max_feature_len$} - {desc}.").unwrap();
+     }
+     if llvm_target_features.is_empty() {
+-        writeln!(out, "    Target features listing is not supported by this LLVM version.")
+-            .unwrap();
+-    }
+-    writeln!(out, "\nUse +feature to enable a feature, or -feature to disable it.").unwrap();
+-    writeln!(out, "For example, rustc -C target-cpu=mycpu -C target-feature=+feature1,-feature2\n")
++        writeln!(
++            out,
++            "    Target features listing is not supported by this LLVM version."
++        )
+         .unwrap();
+-    writeln!(out, "Code-generation features cannot be used in cfg or #[target_feature],").unwrap();
+-    writeln!(out, "and may be renamed or removed in a future version of LLVM or rustc.\n").unwrap();
++    }
++    writeln!(
++        out,
++        "\nUse +feature to enable a feature, or -feature to disable it."
++    )
++    .unwrap();
++    writeln!(
++        out,
++        "For example, rustc -C target-cpu=mycpu -C target-feature=+feature1,-feature2\n"
++    )
++    .unwrap();
++    writeln!(
++        out,
++        "Code-generation features cannot be used in cfg or #[target_feature],"
++    )
++    .unwrap();
++    writeln!(
++        out,
++        "and may be renamed or removed in a future version of LLVM or rustc.\n"
++    )
++    .unwrap();
+ }
+ 
+ /// Returns the host CPU name, according to LLVM.
+@@ -595,7 +648,12 @@ fn handle_native(cpu_name: &str) -> &str
+ }
+ 
+ pub(crate) fn target_cpu(sess: &Session) -> &str {
+-    let cpu_name = sess.opts.cg.target_cpu.as_deref().unwrap_or_else(|| &sess.target.cpu);
++    let cpu_name = sess
++        .opts
++        .cg
++        .target_cpu
++        .as_deref()
++        .unwrap_or_else(|| &sess.target.cpu);
+     handle_native(cpu_name)
+ }
+ 
+@@ -606,7 +664,9 @@ fn llvm_features_by_flags(sess: &Session
+     // -Zfixed-x18
+     if sess.opts.unstable_opts.fixed_x18 {
+         if sess.target.arch != "aarch64" {
+-            sess.dcx().emit_fatal(errors::FixedX18InvalidArch { arch: &sess.target.arch });
++            sess.dcx().emit_fatal(errors::FixedX18InvalidArch {
++                arch: &sess.target.arch,
++            });
+         } else {
+             features.push("+reserve-x18".into());
+         }
+@@ -693,7 +753,9 @@ pub(crate) fn global_llvm_features(
+                 // passing requests down to LLVM. This means that all in-language
+                 // features also work on the command line instead of having two
+                 // different names when the LLVM name and the Rust name differ.
+-                let Some(llvm_feature) = to_llvm_features(sess, feature) else { return };
++                let Some(llvm_feature) = to_llvm_features(sess, feature) else {
++                    return;
++                };
+ 
+                 features.extend(
+                     std::iter::once(format!(
+--- a/library/std/tests/run-time-detect.rs
++++ b/library/std/tests/run-time-detect.rs
+@@ -109,7 +109,6 @@ fn aarch64_linux() {
+     println!("sve2: {}", is_aarch64_feature_detected!("sve2"));
+     println!("sve2p1: {}", is_aarch64_feature_detected!("sve2p1"));
+     println!("sve: {}", is_aarch64_feature_detected!("sve"));
+-    println!("tme: {}", is_aarch64_feature_detected!("tme"));
+     println!("wfxt: {}", is_aarch64_feature_detected!("wfxt"));
+     // tidy-alphabetical-end
+ }
+--- a/library/std_detect/src/detect/os/aarch64.rs
++++ b/library/std_detect/src/detect/os/aarch64.rs
+@@ -84,7 +84,6 @@ pub(crate) fn parse_system_registers(
+ 
+     // ID_AA64ISAR0_EL1 - Instruction Set Attribute Register 0
+     enable_feature(Feature::pmull, bits_shift(aa64isar0, 7, 4) >= 2);
+-    enable_feature(Feature::tme, bits_shift(aa64isar0, 27, 24) == 1);
+     enable_feature(Feature::lse, bits_shift(aa64isar0, 23, 20) >= 2);
+     enable_feature(Feature::crc, bits_shift(aa64isar0, 19, 16) >= 1);
+ 
+--- a/library/std_detect/tests/cpu-detection.rs
++++ b/library/std_detect/tests/cpu-detection.rs
+@@ -86,7 +86,6 @@ fn aarch64_linux() {
+     println!("rcpc2: {}", is_aarch64_feature_detected!("rcpc2"));
+     println!("rcpc3: {}", is_aarch64_feature_detected!("rcpc3"));
+     println!("dotprod: {}", is_aarch64_feature_detected!("dotprod"));
+-    println!("tme: {}", is_aarch64_feature_detected!("tme"));
+     println!("fhm: {}", is_aarch64_feature_detected!("fhm"));
+     println!("dit: {}", is_aarch64_feature_detected!("dit"));
+     println!("flagm: {}", is_aarch64_feature_detected!("flagm"));
+@@ -176,7 +175,6 @@ fn aarch64_bsd() {
+     println!("rdm: {:?}", is_aarch64_feature_detected!("rdm"));
+     println!("rcpc: {:?}", is_aarch64_feature_detected!("rcpc"));
+     println!("dotprod: {:?}", is_aarch64_feature_detected!("dotprod"));
+-    println!("tme: {:?}", is_aarch64_feature_detected!("tme"));
+     println!("paca: {:?}", is_aarch64_feature_detected!("paca"));
+     println!("pacg: {:?}", is_aarch64_feature_detected!("pacg"));
+     println!("aes: {:?}", is_aarch64_feature_detected!("aes"));
+--- a/library/stdarch/ci/docker/aarch64-unknown-linux-gnu/Dockerfile
++++ b/library/stdarch/ci/docker/aarch64-unknown-linux-gnu/Dockerfile
+@@ -15,5 +15,4 @@ RUN apt-get update && apt-get install -y
+ 
+ ENV CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER=aarch64-linux-gnu-gcc \
+     CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_RUNNER="qemu-aarch64 -cpu max -L /usr/aarch64-linux-gnu" \
+-    OBJDUMP=aarch64-linux-gnu-objdump \
+-    STDARCH_TEST_SKIP_FEATURE=tme
++    OBJDUMP=aarch64-linux-gnu-objdump
+--- a/library/stdarch/ci/docker/aarch64_be-unknown-linux-gnu/Dockerfile
++++ b/library/stdarch/ci/docker/aarch64_be-unknown-linux-gnu/Dockerfile
+@@ -27,4 +27,3 @@ ENV AARCH64_BE_LIBC="${AARCH64_BE_TOOLCH
+ ENV CARGO_TARGET_AARCH64_BE_UNKNOWN_LINUX_GNU_LINKER="${AARCH64_BE_TOOLCHAIN}/bin/aarch64_be-none-linux-gnu-gcc"
+ ENV CARGO_TARGET_AARCH64_BE_UNKNOWN_LINUX_GNU_RUNNER="qemu-aarch64_be -cpu max -L ${AARCH64_BE_LIBC}"
+ ENV OBJDUMP="${AARCH64_BE_TOOLCHAIN}/bin/aarch64_be-none-linux-gnu-objdump"
+-ENV STDARCH_TEST_SKIP_FEATURE=tme
+--- a/library/stdarch/crates/core_arch/src/aarch64/mod.rs
++++ b/library/stdarch/crates/core_arch/src/aarch64/mod.rs
+@@ -21,10 +21,6 @@ mod neon;
+ #[stable(feature = "neon_intrinsics", since = "1.59.0")]
+ pub use self::neon::*;
+ 
+-mod tme;
+-#[unstable(feature = "stdarch_aarch64_tme", issue = "117216")]
+-pub use self::tme::*;
+-
+ mod prefetch;
+ #[unstable(feature = "stdarch_aarch64_prefetch", issue = "117217")]
+ pub use self::prefetch::*;
+--- a/library/stdarch/crates/core_arch/src/aarch64/tme.rs
++++ /dev/null
+@@ -1,201 +0,0 @@
+-//! ARM's Transactional Memory Extensions (TME).
+-//!
+-//! This CPU feature is available on Aarch64 - A architecture profile.
+-//! This feature is in the non-neon feature set. TME specific vendor documentation can
+-//! be found [TME Intrinsics Introduction][tme_intrinsics_intro].
+-//!
+-//! The reference is [ACLE Q4 2019][acle_q4_2019_ref].
+-//!
+-//! ACLE has a section for TME extensions and state masks for aborts and failure codes.
+-//! [ARM A64 Architecture Register Datasheet][a_profile_future] also describes possible failure code scenarios.
+-//!
+-//! [acle_q4_2019_ref]: https://static.docs.arm.com/101028/0010/ACLE_2019Q4_release-0010.pdf
+-//! [tme_intrinsics_intro]: https://developer.arm.com/docs/101028/0010/transactional-memory-extension-tme-intrinsics
+-//! [llvm_aarch64_int]: https://github.com/llvm/llvm-project/commit/a36d31478c182903523e04eb271bbf102bfab2cc#diff-ff24e1c35f4d54f1110ce5d90c709319R626-R646
+-//! [a_profile_future]: https://static.docs.arm.com/ddi0601/a/SysReg_xml_futureA-2019-04.pdf?_ga=2.116560387.441514988.1590524918-1110153136.1588469296
+-
+-#[cfg(test)]
+-use stdarch_test::assert_instr;
+-
+-unsafe extern "unadjusted" {
+-    #[link_name = "llvm.aarch64.tstart"]
+-    fn aarch64_tstart() -> u64;
+-    #[link_name = "llvm.aarch64.tcommit"]
+-    fn aarch64_tcommit();
+-    #[link_name = "llvm.aarch64.tcancel"]
+-    fn aarch64_tcancel(imm0: u64);
+-    #[link_name = "llvm.aarch64.ttest"]
+-    fn aarch64_ttest() -> u64;
+-}
+-
+-/// Transaction successfully started.
+-#[unstable(feature = "stdarch_aarch64_tme", issue = "117216")]
+-pub const _TMSTART_SUCCESS: u64 = 0x00_u64;
+-
+-/// Extraction mask for failure reason
+-#[unstable(feature = "stdarch_aarch64_tme", issue = "117216")]
+-pub const _TMFAILURE_REASON: u64 = 0x00007FFF_u64;
+-
+-/// Transaction retry is possible.
+-#[unstable(feature = "stdarch_aarch64_tme", issue = "117216")]
+-pub const _TMFAILURE_RTRY: u64 = 1 << 15;
+-
+-/// Transaction executed a TCANCEL instruction
+-#[unstable(feature = "stdarch_aarch64_tme", issue = "117216")]
+-pub const _TMFAILURE_CNCL: u64 = 1 << 16;
+-
+-/// Transaction aborted because a conflict occurred
+-#[unstable(feature = "stdarch_aarch64_tme", issue = "117216")]
+-pub const _TMFAILURE_MEM: u64 = 1 << 17;
+-
+-/// Fallback error type for any other reason
+-#[unstable(feature = "stdarch_aarch64_tme", issue = "117216")]
+-pub const _TMFAILURE_IMP: u64 = 1 << 18;
+-
+-/// Transaction aborted because a non-permissible operation was attempted
+-#[unstable(feature = "stdarch_aarch64_tme", issue = "117216")]
+-pub const _TMFAILURE_ERR: u64 = 1 << 19;
+-
+-/// Transaction aborted due to read or write set limit was exceeded
+-#[unstable(feature = "stdarch_aarch64_tme", issue = "117216")]
+-pub const _TMFAILURE_SIZE: u64 = 1 << 20;
+-
+-/// Transaction aborted due to transactional nesting level was exceeded
+-#[unstable(feature = "stdarch_aarch64_tme", issue = "117216")]
+-pub const _TMFAILURE_NEST: u64 = 1 << 21;
+-
+-/// Transaction aborted due to a debug trap.
+-#[unstable(feature = "stdarch_aarch64_tme", issue = "117216")]
+-pub const _TMFAILURE_DBG: u64 = 1 << 22;
+-
+-/// Transaction failed from interrupt
+-#[unstable(feature = "stdarch_aarch64_tme", issue = "117216")]
+-pub const _TMFAILURE_INT: u64 = 1 << 23;
+-
+-/// Indicates a TRIVIAL version of TM is available
+-#[unstable(feature = "stdarch_aarch64_tme", issue = "117216")]
+-pub const _TMFAILURE_TRIVIAL: u64 = 1 << 24;
+-
+-// NOTE: Tests for these instructions are disabled on MSVC as dumpbin doesn't
+-// understand these instructions.
+-
+-/// Starts a new transaction. When the transaction starts successfully the return value is 0.
+-/// If the transaction fails, all state modifications are discarded and a cause of the failure
+-/// is encoded in the return value.
+-///
+-/// [ARM TME Intrinsics](https://developer.arm.com/docs/101028/0010/transactional-memory-extension-tme-intrinsics).
+-#[inline]
+-#[target_feature(enable = "tme")]
+-#[cfg_attr(all(test, not(target_env = "msvc")), assert_instr(tstart))]
+-#[unstable(feature = "stdarch_aarch64_tme", issue = "117216")]
+-pub unsafe fn __tstart() -> u64 {
+-    aarch64_tstart()
+-}
+-
+-/// Commits the current transaction. For a nested transaction, the only effect is that the
+-/// transactional nesting depth is decreased. For an outer transaction, the state modifications
+-/// performed transactionally are committed to the architectural state.
+-///
+-/// [ARM TME Intrinsics](https://developer.arm.com/docs/101028/0010/transactional-memory-extension-tme-intrinsics).
+-#[inline]
+-#[target_feature(enable = "tme")]
+-#[cfg_attr(all(test, not(target_env = "msvc")), assert_instr(tcommit))]
+-#[unstable(feature = "stdarch_aarch64_tme", issue = "117216")]
+-pub unsafe fn __tcommit() {
+-    aarch64_tcommit()
+-}
+-
+-/// Cancels the current transaction and discards all state modifications that were performed transactionally.
+-///
+-/// [ARM TME Intrinsics](https://developer.arm.com/docs/101028/0010/transactional-memory-extension-tme-intrinsics).
+-#[inline]
+-#[target_feature(enable = "tme")]
+-#[cfg_attr(
+-    all(test, not(target_env = "msvc")),
+-    assert_instr(tcancel, IMM16 = 0x0)
+-)]
+-#[rustc_legacy_const_generics(0)]
+-#[unstable(feature = "stdarch_aarch64_tme", issue = "117216")]
+-pub unsafe fn __tcancel<const IMM16: u64>() {
+-    static_assert!(IMM16 <= 65535);
+-    aarch64_tcancel(IMM16);
+-}
+-
+-/// Tests if executing inside a transaction. If no transaction is currently executing,
+-/// the return value is 0. Otherwise, this intrinsic returns the depth of the transaction.
+-///
+-/// [ARM TME Intrinsics](https://developer.arm.com/docs/101028/0010/transactional-memory-extension-tme-intrinsics).
+-#[inline]
+-#[target_feature(enable = "tme")]
+-#[cfg_attr(all(test, not(target_env = "msvc")), assert_instr(ttest))]
+-#[unstable(feature = "stdarch_aarch64_tme", issue = "117216")]
+-pub unsafe fn __ttest() -> u64 {
+-    aarch64_ttest()
+-}
+-
+-#[cfg(test)]
+-mod tests {
+-    use stdarch_test::simd_test;
+-
+-    use crate::core_arch::aarch64::*;
+-
+-    const CANCEL_CODE: u64 = (0 | (0x123 & _TMFAILURE_REASON) as u64) as u64;
+-
+-    #[simd_test(enable = "tme")]
+-    unsafe fn test_tstart() {
+-        let mut x = 0;
+-        for i in 0..10 {
+-            let code = tme::__tstart();
+-            if code == _TMSTART_SUCCESS {
+-                x += 1;
+-                assert_eq!(x, i + 1);
+-                break;
+-            }
+-            assert_eq!(x, 0);
+-        }
+-    }
+-
+-    #[simd_test(enable = "tme")]
+-    unsafe fn test_tcommit() {
+-        let mut x = 0;
+-        for i in 0..10 {
+-            let code = tme::__tstart();
+-            if code == _TMSTART_SUCCESS {
+-                x += 1;
+-                assert_eq!(x, i + 1);
+-                tme::__tcommit();
+-            }
+-            assert_eq!(x, i + 1);
+-        }
+-    }
+-
+-    #[simd_test(enable = "tme")]
+-    unsafe fn test_tcancel() {
+-        let mut x = 0;
+-
+-        for i in 0..10 {
+-            let code = tme::__tstart();
+-            if code == _TMSTART_SUCCESS {
+-                x += 1;
+-                assert_eq!(x, i + 1);
+-                tme::__tcancel::<CANCEL_CODE>();
+-                break;
+-            }
+-        }
+-
+-        assert_eq!(x, 0);
+-    }
+-
+-    #[simd_test(enable = "tme")]
+-    unsafe fn test_ttest() {
+-        for _ in 0..10 {
+-            let code = tme::__tstart();
+-            if code == _TMSTART_SUCCESS {
+-                if tme::__ttest() == 2 {
+-                    tme::__tcancel::<CANCEL_CODE>();
+-                    break;
+-                }
+-            }
+-        }
+-    }
+-}
+--- a/library/stdarch/crates/stdarch-test/src/disassembly.rs
++++ b/library/stdarch/crates/stdarch-test/src/disassembly.rs
+@@ -78,7 +78,7 @@ pub(crate) fn disassemble_myself() -> Ha
+     let objdump = env::var("OBJDUMP").unwrap_or_else(|_| "objdump".to_string());
+     let add_args = if cfg!(target_vendor = "apple") && cfg!(target_arch = "aarch64") {
+         // Target features need to be enabled for LLVM objdump on Darwin ARM64
+-        vec!["--mattr=+v8.6a,+crypto,+tme"]
++        vec!["--mattr=+v8.6a,+crypto"]
+     } else if cfg!(any(target_arch = "riscv32", target_arch = "riscv64")) {
+         vec!["--mattr=+zk,+zks,+zbc,+zbb"]
+     } else {
+--- a/library/stdarch/crates/stdarch-verify/tests/arm.rs
++++ b/library/stdarch/crates/stdarch-verify/tests/arm.rs
+@@ -444,7 +444,6 @@ fn verify_all_signatures() {
+                     && !rust.file.ends_with("v6.rs\"")
+                     && !rust.file.ends_with("v7.rs\"")
+                     && !rust.file.ends_with("v8.rs\"")
+-                    && !rust.file.ends_with("tme.rs\"")
+                     && !rust.file.ends_with("mte.rs\"")
+                     && !rust.file.ends_with("ex.rs\"")
+                     && !skip_intrinsic_verify.contains(&rust.name)
