@@ -19,7 +19,10 @@ OECMAKE_SOURCEPATH = "${S}/libclc"
 B_NATIVE = "${B}-native"
 
 # Semicolon-separated list of targets to build
-LIBCLC_TARGETS ?= "all"
+LIBCLC_TARGETS ?= "spirv-mesa3d-;spirv64-mesa3d-"
+# opt tool does not support all targets
+LIBCLC_TARGETS:class-nativesdk = "spirv-mesa3d-;spirv64-mesa3d-"
+LIBCLC_TARGETS:class-target = "spirv-mesa3d-;spirv64-mesa3d-"
 
 EXTRA_OECMAKE += "-DLIBCLC_TARGETS_TO_BUILD='${LIBCLC_TARGETS}'"
 EXTRA_OECMAKE:append:class-target = " -DPREPARE_BUILTINS=${B_NATIVE}/utils/prepare_builtins"
