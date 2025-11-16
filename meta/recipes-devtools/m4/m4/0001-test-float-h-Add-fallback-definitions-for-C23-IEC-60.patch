@@ -1,0 +1,46 @@
+From 58c9afeb6fb9c86e6488f0934dd1ef60f2e9e316 Mon Sep 17 00:00:00 2001
+From: Khem Raj <raj.khem@gmail.com>
+Date: Sat, 15 Nov 2025 17:41:58 -0800
+Subject: [PATCH] test-float-h: Add fallback definitions for C23 IEC 60559
+ macros
+
+The test-float-h test uses C23 macros (FLT_IS_IEC_60559,
+DBL_IS_IEC_60559, LDBL_IS_IEC_60559) that are not available in
+older C standard library headers or when building with pre-C23
+compilers.
+
+Add fallback definitions for these macros to ensure the tests
+compile successfully. The fallback assumes IEEE 754 compliance
+(value of 1), which is appropriate for modern systems.
+
+This fixes build failures when using glibc 2.43+ or toolchains
+that don't yet fully support C23 features.
+
+Upstream-Status: Pending
+Signed-off-by: Khem Raj <raj.khem@gmail.com>
+---
+ tests/test-float-h.c | 11 +++++++++++
+ 1 file changed, 11 insertions(+)
+
+diff --git a/tests/test-float-h.c b/tests/test-float-h.c
+index b1246f6..c49f373 100644
+--- a/tests/test-float-h.c
++++ b/tests/test-float-h.c
+@@ -20,6 +20,17 @@
+ 
+ #include <float.h>
+ 
++/* C23 macros - provide fallback if not defined. */
++#ifndef FLT_IS_IEC_60559
++# define FLT_IS_IEC_60559 1
++#endif
++#ifndef DBL_IS_IEC_60559
++# define DBL_IS_IEC_60559 1
++#endif
++#ifndef LDBL_IS_IEC_60559
++# define LDBL_IS_IEC_60559 1
++#endif
++
+ /* Check that some macros are constant expressions.  */
+ int a[] =
+   {
