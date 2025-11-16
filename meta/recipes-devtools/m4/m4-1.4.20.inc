@@ -12,6 +12,7 @@ SRC_URI = "${GNU_MIRROR}/m4/m4-${PV}.tar.gz \
 SRC_URI:append:class-target = " file://run-ptest \
                                 file://0001-test-c32ispunct-Check-for-musl-along-with-glibc.patch \
                                 file://serial-tests-config.patch \
+                                file://0001-test-float-h-Add-fallback-definitions-for-C23-IEC-60.patch \
                               "
 
 SRC_URI[sha256sum] = "6ac4fc31ce440debe63987c2ebbf9d7b6634e67a7c3279257dc7361de8bdb3ef"
