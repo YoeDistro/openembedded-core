@@ -116,6 +116,7 @@ PACKAGECONFIG:remove:mipsarch = "seccomp"
 
 TARGET_CC_ARCH:append:libc-musl = " -D__UAPI_DEF_ETHHDR=0 -D_LARGEFILE64_SOURCE"
 
+CFLAGS += "-Wno-error=incompatible-pointer-types-discards-qualifiers"
 # Some of the dependencies are weak-style recommends - if not available at runtime,
 # systemd won't fail but the library-related feature will be skipped with a warning.
 
