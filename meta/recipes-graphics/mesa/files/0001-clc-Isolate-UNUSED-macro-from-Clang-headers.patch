@@ -1,0 +1,38 @@
+From a160ed4f4d490ed36c56d68d25f3ad8855b5d788 Mon Sep 17 00:00:00 2001
+From: Khem Raj <raj.khem@gmail.com>
+Date: Fri, 28 Nov 2025 18:15:40 -0800
+Subject: [PATCH] clc: Isolate UNUSED macro from Clang headers
+
+LLVM master added an UNUSED enum value to clang::OffloadArch which
+conflicts with Mesa's UNUSED macro. The macro expands inside the enum
+definition, completely breaking the OffloadArch type.
+
+Include Clang headers first, before any Mesa headers that define UNUSED.
+
+Upstream-Status: Pending
+
+Signed-off-by: Khem Raj <raj.khem@gmail.com>
+---
+ src/compiler/clc/clc_helpers.cpp | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+--- a/src/compiler/clc/clc_helpers.cpp
++++ b/src/compiler/clc/clc_helpers.cpp
+@@ -28,8 +28,6 @@
+ #include <sstream>
+ #include <mutex>
+ 
+-#include "util/ralloc.h"
+-#include "util/set.h"
+ #include <llvm/ADT/ArrayRef.h>
+ #include <llvm/IR/DiagnosticPrinter.h>
+ #include <llvm/IR/DiagnosticInfo.h>
+@@ -68,6 +66,8 @@
+ #include <llvm/Support/VirtualFileSystem.h>
+ #endif
+ 
++#include "util/ralloc.h"
++#include "util/set.h"
+ #include "util/macros.h"
+ #include "util/u_dl.h"
+ #include "glsl_types.h"
