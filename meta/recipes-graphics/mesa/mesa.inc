@@ -21,6 +21,7 @@ SRC_URI = "https://archive.mesa3d.org/mesa-${PV}.tar.xz \
            file://0001-ethosu-drop-file-names-from-the-generated-file.patch \
            file://0002-rocket-drop-file-names-from-the-generated-file.patch \
            file://0001-util-glx-egl-fix-const-qualifier-warnings-found-with.patch \
+           file://0001-clc-Isolate-UNUSED-macro-from-Clang-headers.patch \
 "
 
 SRC_URI[sha256sum] = "059d0d985622f49588f01aa29152804f4da8ffe6add046e00a52923379c2d8da"
