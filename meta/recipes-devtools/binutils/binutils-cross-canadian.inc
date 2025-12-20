@@ -7,6 +7,7 @@ BPN = "binutils"
 DEPENDS = "flex-native bison-native virtual/nativesdk-cross-cc virtual/nativesdk-libc nativesdk-zlib nativesdk-gettext nativesdk-flex"
 EXTRA_OECONF += "--with-sysroot=${SDKPATH}/sysroots/${TUNE_PKGARCH}${TARGET_VENDOR}-${TARGET_OS} \
                 --enable-poison-system-directories \
+                --disable-gprofng \
                 "
 
 # We have to point binutils at a sysroot but we don't need to rebuild if this changes
