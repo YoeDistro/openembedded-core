@@ -1,0 +1,43 @@
+From 720cd9b7e99116b9262cc0c640a8eb3bdcfd9ff6 Mon Sep 17 00:00:00 2001
+From: Khem Raj <raj.khem@gmail.com>
+Date: Mon, 12 Jan 2026 14:01:30 -0800
+Subject: [PATCH] openat-die: Fix format-security warnings with clang 22
+
+Clang 22 treats format strings more strictly and flags the use of
+gettext-translated strings directly as format arguments without an
+explicit format specifier as a security issue.
+
+Add "%s" format specifier to properly handle the translated strings.
+
+Fixes errors like:
+error: format string is not a string literal (potentially insecure) [-Werror,-Wformat-security]
+
+Upstream-Status: Submitted [https://lists.gnu.org/archive/html/bug-gnulib/2026-01/msg00087.html]
+
+Signed-off-by: Khem Raj <raj.khem@gmail.com>
+---
+ lib/openat-die.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/lib/openat-die.c b/lib/openat-die.c
+index 589dbd1..6d05432 100644
+--- a/lib/openat-die.c
++++ b/lib/openat-die.c
+@@ -35,7 +35,7 @@ openat_save_fail (int errnum)
+ {
+ #ifndef GNULIB_LIBPOSIX
+   error (exit_failure, errnum,
+-         _("unable to record current working directory"));
++         "%s", _("unable to record current working directory"));
+ #endif
+   /* _Noreturn cannot be applied to error, since it returns
+      when its first argument is 0.  To help compilers understand that this
+@@ -54,7 +54,7 @@ openat_restore_fail (int errnum)
+ {
+ #ifndef GNULIB_LIBPOSIX
+   error (exit_failure, errnum,
+-         _("failed to return to initial working directory"));
++         "%s", _("failed to return to initial working directory"));
+ #endif
+
+   /* As above.  */
