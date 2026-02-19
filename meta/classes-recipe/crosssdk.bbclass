@@ -12,6 +12,7 @@ NATIVESDKLIBC ?= "libc-glibc"
 LIBCOVERRIDE = ":${NATIVESDKLIBC}"
 MACHINEOVERRIDES = ""
 PACKAGE_ARCH = "${SDK_ARCH}"
+DISTRO_FEATURES_BACKFILL = ""
 
 python () {
     # set TUNE_PKGARCH to SDK_ARCH
@@ -19,6 +20,7 @@ python () {
     # Set features here to prevent appends and distro features backfill
     # from modifying nativesdk distro features
     features = set(d.getVar("DISTRO_FEATURES_NATIVESDK").split())
+    oe.utils.features_backfill("DISTRO_FEATURES", d)
     filtered = set(bb.utils.filter("DISTRO_FEATURES", d.getVar("DISTRO_FEATURES_FILTER_NATIVESDK"), d).split())
     d.setVar("DISTRO_FEATURES", " ".join(sorted(features | filtered)))
 }

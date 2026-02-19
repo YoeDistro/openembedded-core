@@ -85,6 +85,7 @@ python nativesdk_virtclass_handler () {
     # Set features here to prevent appends and distro features backfill
     # from modifying nativesdk distro features
     features = set(d.getVar("DISTRO_FEATURES_NATIVESDK").split())
+    oe.utils.features_backfill("DISTRO_FEATURES", d)
     filtered = set(bb.utils.filter("DISTRO_FEATURES", d.getVar("DISTRO_FEATURES_FILTER_NATIVESDK"), d).split())
     d.setVar("DISTRO_FEATURES", " ".join(sorted(features | filtered)))
 
