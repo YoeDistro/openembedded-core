@@ -5,16 +5,16 @@
 # 'vfp', -mfloat-abi parameter and 'hf' suffix is implemented in feature-arm-vfp.inc
 
 TUNEVALID[neon] = "Enable Neon SIMD accelerator unit."
-TUNE_CCARGS_MFPU .= "${@bb.utils.contains('TUNE_FEATURES', 'neon', ' neon', '', d)}"
+TUNE_CCARGS_MFPU .= " ${@bb.utils.filter('TUNE_FEATURES', 'neon', d)}"
 
 TUNEVALID[vfpv3d16] = "Enable Vector Floating Point Version 3 with 16 registers (vfpv3-d16) unit."
-TUNE_CCARGS_MFPU .= "${@bb.utils.contains('TUNE_FEATURES', 'vfpv3d16', ' vfpv3-d16', '', d)}"
+TUNE_CCARGS_MFPU .= " ${@bb.utils.contains('TUNE_FEATURES', 'vfpv3d16', ' vfpv3-d16', '', d)}"
 
 TUNEVALID[vfpv3] = "Enable Vector Floating Point Version 3 with 32 registers (vfpv3) unit."
-TUNE_CCARGS_MFPU .= "${@bb.utils.contains('TUNE_FEATURES', 'vfpv3', ' vfpv3', '' , d)}"
+TUNE_CCARGS_MFPU .= " ${@bb.utils.filter('TUNE_FEATURES', 'vfpv3', d)}"
 
 TUNEVALID[vfpv4] = "Enable Vector Floating Point Version 4 (vfpv4) unit."
-TUNE_CCARGS_MFPU .= "${@bb.utils.contains('TUNE_FEATURES', 'vfpv4', ' vfpv4', '', d)}"
+TUNE_CCARGS_MFPU .= " ${@bb.utils.filter('TUNE_FEATURES', 'vfpv4', d)}"
 TUNE_CCARGS_MFPU .= "${@bb.utils.contains('TUNE_FEATURES', [ 'vfpv4', 'neon' ], ' neon-vfpv4', '', d)}"
 
 TUNEVALID[vfpv4d16] = "Enable Vector Floating Point Version 4 with 16 registers (vfpv4-d16) unit."
