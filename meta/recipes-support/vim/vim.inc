@@ -16,6 +16,7 @@ SRC_URI = "git://github.com/vim/vim.git;branch=master;protocol=https;tag=v${PV} 
            file://disable_acl_header_check.patch \
            file://0001-src-Makefile-improve-reproducibility.patch \
            file://no-path-adjust.patch \
+           ${@bb.utils.contains('PACKAGECONFIG', 'tiny', 'file://0001-skip-source_defaults-when-Vim-is-invoked-as-vi.patch', '', d)} \
            "
 
 PV .= ".0569"
@@ -31,6 +32,8 @@ VIMDIR = "vim${@d.getVar('PV').split('.')[0]}${@d.getVar('PV').split('.')[1]}"
 inherit autotools-brokensep update-alternatives mime-xdg pkgconfig
 
 CLEANBROKEN = "1"
+
+CFLAGS:append = " ${@bb.utils.contains('PACKAGECONFIG', 'tiny', '-DTINY_VIMRC', '', d)}"
 
 # vim configure.in contains functions which got 'dropped' by autotools.bbclass
 do_configure () {

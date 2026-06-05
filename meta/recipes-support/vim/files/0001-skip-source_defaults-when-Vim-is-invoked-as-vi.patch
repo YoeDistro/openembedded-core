@@ -1,0 +1,61 @@
+From 7dad45f751d4adbee480005a5546b32a97fdbfb2 Mon Sep 17 00:00:00 2001
+From: Zheng Ruoqin <zhengrq.fnst@fujitsu.com>
+Date: Fri, 5 Jun 2026 09:34:18 +0000
+Subject:[PATCH] Skip sourcing defaults.vim when Vim is invoked as
+ vi
+
+This is used only in the vim-tiny package to skip "source_defaults" error
+ E1187: Failed to source defaults.vim
+Press ENTER or type command to continue
+
+Upstream-Status: Inappropriate [oe specific]
+
+Signed-off-by: Zheng Ruoqin <zhengrq.fnst@fujitsu.com>
+---
+ src/main.c    | 7 +++++++
+ src/structs.h | 4 ++++
+ 2 files changed, 11 insertions(+)
+
+diff --git a/src/main.c b/src/main.c
+index d4019ff51e..685fae2a02 100644
+--- a/src/main.c
++++ b/src/main.c
+@@ -2059,6 +2059,10 @@ parse_command_name(mparm_T *parmp)
+     }
+     else if (STRNICMP(initstr, "vim", 3) == 0)
+ 	initstr += 3;
++#ifdef TINY_VIMRC
++    else if (STRNICMP(initstr, "vi", 2) == 0)
++       parmp->vi_mode = TRUE;
++#endif
+ 
+     // Catch "[r][g]vimdiff" and "[r][g]viewdiff".
+     if (STRICMP(initstr, "diff") == 0)
+@@ -3426,6 +3430,9 @@ source_startup_scripts(mparm_T *parmp)
+ # ifdef USR_EXRC_FILE2
+ 		&& do_source((char_u *)USR_EXRC_FILE2, FALSE,
+ 						       DOSO_NONE, NULL) == FAIL
++#endif
++#if defined(TINY_VIMRC)
++                && !parmp->vi_mode
+ # endif
+ 		&& !has_dash_c_arg)
+ 	    {
+diff --git a/src/structs.h b/src/structs.h
+index 955b9f1001..09a0f7f7a8 100644
+--- a/src/structs.h
++++ b/src/structs.h
+@@ -4874,6 +4874,10 @@ typedef struct
+ #ifdef FEAT_DIFF
+     int		diff_mode;		// start with 'diff' set
+ #endif
++#ifdef TINY_VIMRC
++    int         vi_mode;                /* started as "vi" */
++#endif
++
+ } mparm_T;
+ 
+ /*
+-- 
+2.43.0
+
