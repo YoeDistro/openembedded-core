@@ -1,0 +1,45 @@
+From: Khem Raj <raj.khem@gmail.com>
+Date: Wed, 25 Jun 2026 00:00:00 +0000
+Subject: [PATCH] FindGI: drop bare system include dirs from g-ir-scanner flags
+
+When cross-compiling, CMake's pkg_check_modules records the bare pkg-config
+INCLUDEDIR variable (e.g. /usr/include) on the imported targets'
+INTERFACE_INCLUDE_DIRECTORIES. FindGI forwards every interface include dir
+to g-ir-scanner as -I, so the introspection compile is invoked with a bare
+-I/usr/include. With a GCC configured with
+--enable-poison-system-directories=error (as in OpenEmbedded) this is a hard
+error:
+
+  cc1: error: include location "/usr/include" is unsafe for cross-compilation
+  [-Werror=poison-system-directories]
+
+g-ir-scanner does not forward the recipe's -Wno-error=poison-system-directories
+(it only extracts -D/-I/-U from CFLAGS), so the warning cannot be relaxed from
+the recipe. Filter the bare host system include directories out of the scanner
+flags instead; the proper sysroot include path is added by the compiler driver
+automatically, so dropping them is safe.
+
+Upstream-Status: Pending
+
+Signed-off-by: Khem Raj <raj.khem@gmail.com>
+---
+ Source/cmake/FindGI.cmake | 9 +++++++++
+ 1 file changed, 9 insertions(+)
+
+--- a/Source/cmake/FindGI.cmake
++++ b/Source/cmake/FindGI.cmake
+@@ -297,6 +297,15 @@
+         if (NOT IS_ABSOLUTE "${incdir}")
+             get_filename_component(incdir "${incdir}" REALPATH BASE_DIR "${target_srcdir}")
+         endif ()
++        # Skip bare host system include directories. When cross-compiling
++        # these leak in via the bare pkg-config INCLUDEDIR variable and
++        # g-ir-scanner passes them to the compiler, which rejects them with
++        # -Werror=poison-system-directories ("include location \"/usr/include\"
++        # is unsafe for cross-compilation"). The sysroot include path is added
++        # automatically, so dropping these is safe.
++        if (incdir STREQUAL "/usr/include" OR incdir STREQUAL "/usr/local/include")
++            continue ()
++        endif ()
+         list(APPEND scanner_flags "-I${incdir}")
+     endforeach ()
