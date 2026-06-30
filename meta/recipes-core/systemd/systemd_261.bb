@@ -910,7 +910,7 @@ pkg_prerm:${PN}:libc-glibc () {
 	fi
 }
 
-PACKAGE_WRITE_DEPS += "qemuwrapper-cross"
+PACKAGE_WRITE_DEPS += "qemuwrapper-cross systemd-hwdb-native"
 
 pkg_postinst:udev-hwdb () {
 	if test -n "$D"; then

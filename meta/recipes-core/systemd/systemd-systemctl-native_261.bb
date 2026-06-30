@@ -6,6 +6,9 @@ require systemd.inc
 
 DEPENDS = "gperf-native libcap-native util-linux-native python3-jinja2-native"
 
+# TODO: Remove STATX_MNT_ID patch once minimum supported build host kernel is >= 5.8 (RHEL 8 EOL: 2029)
+SRC_URI += "file://Handle-missing-pidfd_open-and-STATX_MNT_ID-on-older-.patch"
+
 inherit pkgconfig meson native
 
 MESON_TARGET = "systemctl:executable"
