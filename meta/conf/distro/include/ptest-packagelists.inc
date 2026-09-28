@@ -8,6 +8,7 @@ PTESTS_FAST = "\
     alsa-lib \
     apr-util \
     attr \
+    avahi \
     babeltrace2 \
     bc \
     bluez5 \
