@@ -27,7 +27,8 @@ SRC_URI += " \
            file://0001-tests-autopoint-3-unset-MAKEFLAGS.patch \
            file://0001-init-env.in-do-not-add-C-CXX-parameters.patch \
            "
-SRC_URI:append:libc-musl = " file://0001-Ignore-failing-tests-needing-BIG5-encoding-on-musl.patch"
+SRC_URI:append:libc-musl = " file://0001-Ignore-failing-tests-needing-BIG5-encoding-on-musl.patch \
+                             file://0001-libgettextpo-Do-not-omit-the-setlocale-lock-when-lib.patch"
 
 inherit autotools texinfo pkgconfig ptest
 
