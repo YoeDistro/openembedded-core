@@ -1,0 +1,39 @@
+From 3d9bedc1e3df3bac9d13a904aac6ce6357160bf9 Mon Sep 17 00:00:00 2001
+From: Khem Raj <raj.khem@gmail.com>
+Date: Sun, 27 Sep 2026 20:54:33 -0700
+Subject: [PATCH] libgettextpo: Do not omit the setlocale lock when libintl is
+ not used
+
+libgettextpo is compiled with -DOMIT_SETLOCALE_LOCK=1, which expects
+gl_get_setlocale_null_lock() to be provided by libintl. On musl there
+is no libintl since the C library implements gettext, and
+setlocale (LC_ALL, NULL) is not multithread-safe, so gnulib's
+setlocale_null() references the lock. Nothing defines it, and
+libgettextpo.so ends up with an undefined symbol:
+
+  Error relocating /usr/lib/libgettextpo.so.0: gl_get_setlocale_null_lock: symbol not found
+
+which breaks every user of the library, including the gettextpo-1 test.
+
+Let libgettextpo define its own lock. Like other gnulib symbols it gets
+renamed with the libgettextpo_ prefix and is not exported.
+
+Upstream-Status: Pending
+Signed-off-by: Khem Raj <raj.khem@gmail.com>
+---
+ gettext-tools/libgettextpo/Makefile.am | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/gettext-tools/libgettextpo/Makefile.am b/gettext-tools/libgettextpo/Makefile.am
+index 75b64bb..170ba84 100644
+--- a/gettext-tools/libgettextpo/Makefile.am
++++ b/gettext-tools/libgettextpo/Makefile.am
+@@ -42,7 +42,7 @@ AM_CPPFLAGS = \
+   -I../src -I$(top_srcdir)/src \
+   -I../../gettext-runtime/intl -I$(top_srcdir)/../gettext-runtime/intl
+ 
+-DEFS = -DIN_LIBGETTEXTPO=1 -DOMIT_SETLOCALE_LOCK=1 @DEFS@
++DEFS = -DIN_LIBGETTEXTPO=1 @DEFS@
+ 
+ # Enable more warning options in this directory.
+ AM_CFLAGS = @WARN_CFLAGS@
