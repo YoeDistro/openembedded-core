@@ -54,6 +54,7 @@ EXTRA_OECONF:append:class-target = " --disable-tests-rpath"
 EXTRA_OECONF:append:class-target:microblaze = " --disable-symbol-versioning"
 
 RDEPENDS:${PN}-ptest:append:libc-glibc = " glibc-utils glibc-dbg glibc-dev"
+RDEPENDS:${PN}-ptest:append:libc-musl = " musl-dbg"
 INSANE_SKIP:${PN}-ptest = "debug-deps dev-deps"
 
 do_compile_ptest() {
@@ -65,7 +66,7 @@ PTEST_PARALLEL_MAKE = ""
 PTEST_XFAILS ?= ""
 # See - https://sourceware.org/bugzilla/show_bug.cgi?id=32232
 PTEST_XFAILS:append = "${@bb.utils.contains('DISTRO_FEATURES', 'ld-is-lld', ' run-strip-strmerge.sh run-elflint-self.sh run-backtrace-data.sh run-reverse-sections-self.sh', '', d)}"
-PTEST_XFAILS:append:libc-musl = " run-large-elf-file.sh run-backtrace-data.sh run-backtrace-native.sh run-stack-d-test.sh run-stack-i-test.sh run-stack-demangled-test.sh run-deleted.sh run-compress-test.sh"
+PTEST_XFAILS:append:libc-musl = " run-large-elf-file.sh run-backtrace-data.sh run-backtrace-native.sh run-backtrace-native-core.sh run-stack-d-test.sh run-stack-i-test.sh run-stack-demangled-test.sh run-deleted.sh run-compress-test.sh"
 # systemwide stackprof tests need userspace CPU activity, which minimal qemu images lack
 PTEST_XFAILS:append:qemuall = " run-stackprof-system.sh run-stackprof-system-gprof.sh"
 
