@@ -1,0 +1,76 @@
+From adccb64aa5864d43acf39d16e97636bedf15734f Mon Sep 17 00:00:00 2001
+From: Khem Raj <raj.khem@gmail.com>
+Date: Sun, 27 Sep 2026 20:54:18 -0700
+Subject: [PATCH] printf: check range before converting doubles to integers
+
+format_integer_digits() converts the value to uintmax_t (or intmax_t for
+negative values) and then converts it back to detect values that do not
+fit, falling back to %g formatting in that case. An out of range
+floating point to integer conversion is undefined behavior though, so
+clang assumes the round trip is exact and folds the check away. On
+x86-64 the conversion then yields 0x8000000000000000, and for example
+sprintf("%x", 1e20) prints 0x8000000000000000 instead of 1e+20, which
+makes the intformat test fail.
+
+Check that the value is within range before converting it.
+
+Upstream-Status: Pending
+Signed-off-by: Khem Raj <raj.khem@gmail.com>
+---
+ printf.c | 36 ++++++++++++++++++++++--------------
+ 1 file changed, 22 insertions(+), 14 deletions(-)
+
+diff --git a/printf.c b/printf.c
+index 0264692..e518e95 100644
+--- a/printf.c
++++ b/printf.c
+@@ -923,27 +923,35 @@ format_integer_digits(NODE *arg, struct flags *flags, bool *used_float)
+ 		}
+ 	} else {
+ 		// octal or hex or unsigned decimal
++		bool in_range;
++
+ 		chbuf = (flags->format == 'X' ? Uchbuf : lchbuf);
+ 
++		/*
++		 * Converting an out of range double to an integer is
++		 * undefined behavior, and compilers may assume the round
++		 * trip below is exact, so check the range first.
++		 */
+ 		if (tmpval < 0) {
+-			uval = (uintmax_t) (intmax_t) tmpval;
+-			if ((AWKNUM)(intmax_t)uval != double_to_int(tmpval)) {
+-				flags->format = 'g';
+-				free((void *) buf);
+-				*used_float = true;
+-
+-				return format_float(arg, flags);
++			in_range = (tmpval >= (AWKNUM) INTMAX_MIN);
++			if (in_range) {
++				uval = (uintmax_t) (intmax_t) tmpval;
++				in_range = ((AWKNUM)(intmax_t)uval == double_to_int(tmpval));
+ 			}
+ 		} else {
+-			uval = (uintmax_t) tmpval;
+-			if ((AWKNUM)uval != double_to_int(tmpval)) {
+-				flags->format = 'g';
+-				free((void *) buf);
+-				*used_float = true;
+-
+-				return format_float(arg, flags);
++			in_range = (tmpval < (AWKNUM) UINTMAX_MAX);
++			if (in_range) {
++				uval = (uintmax_t) tmpval;
++				in_range = ((AWKNUM)uval == double_to_int(tmpval));
+ 			}
+ 		}
++		if (! in_range) {
++			flags->format = 'g';
++			free((void *) buf);
++			*used_float = true;
++
++			return format_float(arg, flags);
++		}
+ 
+ 		// generate the digits backwards.
+ 		do {
