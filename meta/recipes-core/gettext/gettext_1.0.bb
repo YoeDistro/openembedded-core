@@ -61,6 +61,8 @@ EXTRA_OECONF:append:libc-musl = "\
 PACKAGECONFIG ??= "glib libxml ${@bb.utils.filter('DISTRO_FEATURES', 'selinux', d)}"
 PACKAGECONFIG:class-native = ""
 PACKAGECONFIG:class-nativesdk = ""
+# musl has no GNU libintl, so libgettextpo needs gl_get_setlocale_null_lock from shared libunistring
+PACKAGECONFIG:append:libc-musl = " libunistring"
 
 PACKAGECONFIG[glib] = "--without-included-glib,--with-included-glib,glib-2.0"
 PACKAGECONFIG[libxml] = "--without-included-libxml,--with-included-libxml,libxml2"
