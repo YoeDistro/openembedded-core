@@ -52,6 +52,7 @@ EXTRA_OECONF:append:class-target = " --disable-tests-rpath"
 EXTRA_OECONF:append:class-target:microblaze = " --disable-symbol-versioning"
 
 RDEPENDS:${PN}-ptest:append:libc-glibc = " glibc-utils glibc-dbg glibc-dev"
+RDEPENDS:${PN}-ptest:append:libc-musl = " musl-dbg"
 INSANE_SKIP:${PN}-ptest = "debug-deps dev-deps"
 
 do_compile_ptest() {
