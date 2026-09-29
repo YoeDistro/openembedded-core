@@ -1,0 +1,107 @@
+From 3a77e07b66a3c828098ae601351a56c541803934 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Jo=C3=A3o=20Marcos=20Costa?= <joaomarcos.costa@bootlin.com>
+Date: Mon, 28 Sep 2026 15:56:37 +0000
+Subject: [PATCH] tests/Makefile.am: disable slow test cases in RISCV64
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Timeouts have been observed (very frequently in the past weeks)
+in the autobuilder, and a bug [1] was filed at Bugzilla.
+
+After some investigation [2] was performed by Trevor Gamblin, we now have a
+list of the most time consuming test cases:
+
+- mini-record-2 (187880ms)
+- record-retvals (145390ms)
+- rng-op-key (63820ms)
+- rng-op-random (63330ms)
+- rng-op-nonce (63260ms)
+- dtls-rehandshake-cert (61360ms)
+- dtls-rehandshake-cert-2 (61230ms)
+- dtls-rehandshake-anon (61030ms)
+- mini-loss-time (60130ms)
+- mini-dtls-hello-verify-48 (30050ms)
+- tls12-ffdhe (27790ms)
+- x509sign-verify-rsa (18460ms)
+- x509sign-verify-ecdsa (16050ms)
+
+Disable the tests that take > 60000ms to avoid so many timeouts in qemuriscv64-ptest runs.
+
+Upstream-Status: Inappropriate [oe-core specific]
+
+[1] https://bugzilla.yoctoproject.org/show_bug.cgi?id=16162
+[2] https://bugzilla.yoctoproject.org/show_bug.cgi?id=16162#c19
+
+Signed-off-by: João Marcos Costa <joaomarcos.costa@bootlin.com>
+---
+ tests/Makefile.am | 14 +++++++-------
+ 1 file changed, 7 insertions(+), 7 deletions(-)
+
+diff --git a/tests/Makefile.am b/tests/Makefile.am
+index f84b2f1..5f4d86e 100644
+--- a/tests/Makefile.am
++++ b/tests/Makefile.am
+@@ -161,7 +161,7 @@ ctests += tls13-early-start
+ 
+ ctests += tls13/no-auto-send-ticket
+ 
+-ctests += mini-record-2 simple gnutls_hmac_fast set_pkcs12_cred cert certuniqueid tls-neg-ext-key \
++ctests += simple gnutls_hmac_fast set_pkcs12_cred cert certuniqueid tls-neg-ext-key \
+ 	 mpi certificate_set_x509_crl dn parse_ca x509-dn x509-dn-decode record-sizes \
+ 	 hostname-check cve-2008-4989 pkcs12_s2k chainverify missingissuer missingissuer_aia record-sizes-range \
+ 	 crq_key_id x509sign-verify sign-verify cve-2009-1415 cve-2009-1416		\
+@@ -172,13 +172,13 @@ ctests += mini-record-2 simple gnutls_hmac_fast set_pkcs12_cred cert certuniquei
+ 	 rng-fork mini-eagain-dtls resume-dtls empty_retrieve_function \
+ 	 tls13-rehandshake-cert gnutls_ext_raw_parse handshake-large-cert \
+ 	 x509cert x509cert-tl x509cert-ct infoaccess mini-dtls-hello-verify sign-verify-ed25519-rfc8080 \
+-	 trustdb-tofu dtls-rehandshake-anon mini-alpn mini-dtls-large \
++	 trustdb-tofu mini-alpn mini-dtls-large \
+ 	 mini-termination mini-x509-cas mini-x509-2 pkcs12_simple \
+ 	 mini-emsgsize-dtls chainverify-unsorted mini-overhead tls12-ffdhe \
+ 	 mini-dtls-heartbeat mini-x509-callbacks key-openssl priorities priorities-groups	\
+ 	 gnutls_x509_privkey_import gnutls_x509_crt_list_import time x509-server-verify \
+ 	 sign-verify-ext4 tls-neg-ext4-key resume-lifetime \
+-	 mini-dtls-srtp rsa-encrypt-decrypt mini-loss-time gnutls-strcodes \
++	 mini-dtls-srtp rsa-encrypt-decrypt gnutls-strcodes \
+ 	 mini-record mini-dtls-record handshake-timeout mini-record-range \
+ 	 cert-status rsa-psk global-init sec-params sign-verify-data \
+ 	 fips-test fips-override-test mini-global-load name-constraints x509-extensions \
+@@ -192,14 +192,14 @@ ctests += mini-record-2 simple gnutls_hmac_fast set_pkcs12_cred cert certuniquei
+ 	 rsa-rsa-oaep rsa-rsa-pss \
+ 	 mini-dtls-fork mini-key-material x509cert-invalid \
+ 	 tls-ext-register tls-supplemental mini-dtls0-9 duplicate-extensions \
+-	 record-retvals mini-server-name tls-etm tls-force-etm x509-cert-callback alerts \
++	 mini-server-name tls-etm tls-force-etm x509-cert-callback alerts \
+ 	 client-sign-md5-rep tls12-invalid-key-exchanges session-rdn-read \
+ 	 tls13-cert-key-exchange x509-cert-callback-ocsp gnutls_ocsp_resp_list_import2 \
+ 	 server-sign-md5-rep privkey-keygen mini-tls-nonblock no-signal pkcs7-gen dtls-etm \
+ 	 x509sign-verify-rsa x509sign-verify-ecdsa x509sign-verify-gost \
+ 	 cipher-alignment oids atfork prf psk-file priority-init2 post-client-hello-change-prio \
+ 	 status-request status-request-ok rfc7633-missing sign-verify-ext \
+-	 fallback-scsv pkcs8-key-decode urls dtls-rehandshake-cert rfc7633-ok \
++	 fallback-scsv pkcs8-key-decode urls rfc7633-ok \
+ 	 key-usage-rsa key-usage-ecdhe-rsa mini-session-verify-function auto-verify \
+ 	 record-timeouts mini-dtls-hello-verify-48 set-default-prio \
+ 	 tls12-anon-upgrade tlsext-decoding rsa-psk-cb gnutls-ids \
+@@ -214,7 +214,7 @@ ctests += mini-record-2 simple gnutls_hmac_fast set_pkcs12_cred cert certuniquei
+ 	 set_x509_key_file_der set_x509_pkcs12_key crt_apis tls12-cert-key-exchange \
+ 	 tls11-cert-key-exchange tls10-cert-key-exchange ssl30-cert-key-exchange \
+ 	 dtls12-cert-key-exchange dtls10-cert-key-exchange x509-cert-callback-legacy \
+-	 keylog-env ssl2-hello tlsfeature-ext dtls-rehandshake-cert-2 dtls-session-ticket-lost \
++	 keylog-env ssl2-hello tlsfeature-ext dtls-session-ticket-lost \
+ 	 tlsfeature-crt dtls-rehandshake-cert-3 resume-with-false-start \
+ 	 set_x509_key_file_ocsp client-fastopen rng-sigint srp \
+ 	 safe-renegotiation/srn0 safe-renegotiation/srn1 safe-renegotiation/srn2 \
+@@ -230,7 +230,7 @@ ctests += mini-record-2 simple gnutls_hmac_fast set_pkcs12_cred cert certuniquei
+ 	 rng-no-onload dtls1-2-mtu-check crl_apis cert_verify_inv_utf8 no-extensions \
+ 	 no-status-request hostname-check-utf8 pkcs8-key-decode-encrypted priority-mix pkcs7 \
+ 	 send-data-before-handshake recv-data-before-handshake crt_inv_write \
+-	 x509sign-verify-error rng-op-nonce rng-op-random rng-op-key x509-dn-decode-compat \
++	 x509sign-verify-error x509-dn-decode-compat \
+ 	 ip-check mini-x509-ipaddr trust-store base64-raw random-art dhex509self \
+ 	 dss-sig-val sign-pk-api tls-session-ext-override record-pad \
+ 	 tls13-server-kx-neg gnutls_ext_raw_parse_dtls key-export-pkcs8 \
+-- 
+2.39.5
+

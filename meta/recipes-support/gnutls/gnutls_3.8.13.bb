@@ -27,6 +27,10 @@ SRC_URI = "https://www.gnupg.org/ftp/gcrypt/gnutls/v${SHRT_VER}/gnutls-${PV}.tar
            file://0001-tests-mini-dtls-framents-link-to-gnulib.patch \
            "
 
+SRC_URI:append:riscv64 = "\
+    file://0001-tests-Makefile.am-disable-slow-test-cases-in-RISCV64.patch \
+"
+
 SRC_URI[sha256sum] = "ffed8ec1bf09c2426d4f14aae377de4753b53e537d685e604e99a8b16ca9c97e"
 
 inherit autotools texinfo pkgconfig gettext lib_package gtk-doc ptest
