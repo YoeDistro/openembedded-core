@@ -155,6 +155,7 @@ PTESTS_SLOW = "\
     tar \
     tcl \
     tcl8 \
+    tiff \
     util-linux \
     zstd \
 "
