@@ -1,0 +1,47 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Khem Raj <raj.khem@gmail.com>
+Date: Sun, 27 Sep 2026 20:54:55 -0700
+Subject: [PATCH 1/2] tls/tests/connection.c: Ignore client close error in
+ missing-private-key test with openssl
+
+With TLS 1.3 the server rejects the client certificate after the client
+has finished its side of the handshake, so the certificate-required alert
+is reported again when the client closes the connection. The
+client-auth-failure test already ignores the close error for this
+reason, and the missing-private-key test does the same for the openssl
+backend on Windows. On Linux (openssl 4.0, musl) it fails every time too:
+
+GLib-Net:ERROR:../sources/glib-networking-2.80.1/tls/tests/connection.c:545:on_client_connection_close_finish: assertion failed (error == NULL): Server required TLS certificate (g-tls-error-quark, 5)
+not ok /tls/openssl/connection/client-auth-fail-missing-client-private-key
+
+Ignore the close error for the openssl backend on all platforms. The
+test still checks the read and server errors.
+
+Upstream-Status: Pending
+Signed-off-by: Khem Raj <raj.khem@gmail.com>
+---
+ tls/tests/connection.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/tls/tests/connection.c b/tls/tests/connection.c
+index ac70a70..c58b8fc 100644
+--- a/tls/tests/connection.c
++++ b/tls/tests/connection.c
+@@ -1685,7 +1685,7 @@ test_client_auth_fail_missing_client_private_key (TestConnection *test,
+   /* All validation in this test */
+   g_tls_client_connection_set_validation_flags (G_TLS_CLIENT_CONNECTION (test->client_connection),
+                                                 G_TLS_CERTIFICATE_VALIDATE_ALL);
+-#if BACKEND_IS_OPENSSL && defined(G_OS_WIN32)
++#if BACKEND_IS_OPENSSL
+   test->ignore_client_close_error = TRUE;
+ #endif
+ 
+@@ -1693,7 +1693,7 @@ test_client_auth_fail_missing_client_private_key (TestConnection *test,
+   g_main_loop_run (test->loop);
+   wait_until_server_finished (test);
+ 
+-#if BACKEND_IS_OPENSSL && defined(G_OS_WIN32)
++#if BACKEND_IS_OPENSSL
+   test->ignore_client_close_error = FALSE;
+ #endif
+ 

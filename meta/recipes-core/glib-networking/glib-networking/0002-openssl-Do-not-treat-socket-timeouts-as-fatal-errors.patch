@@ -1,0 +1,86 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Khem Raj <raj.khem@gmail.com>
+Date: Fri, 9 Oct 2026 12:50:33 -0700
+Subject: [PATCH 2/2] openssl: Do not treat socket timeouts as fatal errors
+
+When the underlying GSocket has a timeout and a read times out, GSocket
+remembers it and the next g_socket_receive () fails with
+G_IO_ERROR_TIMED_OUT. gtlsbio only sets the BIO retry flag for
+G_IO_ERROR_WOULD_BLOCK, so OpenSSL sees a hard transport failure,
+SSL_read () fails with SSL_ERROR_SYSCALL and the SSL object moves into its
+error state. Every later operation on the connection then fails with
+SSL_ERROR_SSL, e.g. the write after the timed out read:
+
+GLib-Net:ERROR:../sources/glib-networking-2.90.0/tls/tests/connection.c:2084:socket_client_timed_out_write: assertion failed (error == NULL): Error writing data to TLS socket: (null) (g-tls-error-quark, 1)
+not ok /tls/openssl/connection/read-time-out-then-write
+
+The GnuTLS backend maps a timeout to EINTR, which GnuTLS does not
+consider fatal. Do the equivalent for OpenSSL by setting the retry flag
+for timeouts too, and make end_openssl_io () return the timed out status
+instead of retrying the operation forever.
+
+Upstream-Status: Pending
+Signed-off-by: Khem Raj <raj.khem@gmail.com>
+---
+ tls/openssl/gtlsbio.c                              | 14 ++++++++++++--
+ tls/openssl/{gtlsbio.c => gtlsbio.c.orig}          |  0
+ tls/openssl/gtlsconnection-openssl.c               |  3 ++-
+ ...ion-openssl.c => gtlsconnection-openssl.c.orig} |  0
+ 4 files changed, 14 insertions(+), 3 deletions(-)
+ copy tls/openssl/{gtlsbio.c => gtlsbio.c.orig} (100%)
+ copy tls/openssl/{gtlsconnection-openssl.c => gtlsconnection-openssl.c.orig} (100%)
+
+diff --git a/tls/openssl/gtlsbio.c b/tls/openssl/gtlsbio.c
+index 6656d76..1f96b9a 100644
+--- a/tls/openssl/gtlsbio.c
++++ b/tls/openssl/gtlsbio.c
+@@ -163,7 +163,12 @@ gtls_bio_write (BIO        *bio,
+ 
+   if (written == -1)
+     {
+-      if (g_error_matches (error, G_IO_ERROR, G_IO_ERROR_WOULD_BLOCK))
++      /* A timeout is not fatal for the connection, like with GnuTLS. Do not
++       * let OpenSSL treat it as a transport failure, which would put the
++       * connection into an unrecoverable error state.
++       */
++      if (g_error_matches (error, G_IO_ERROR, G_IO_ERROR_WOULD_BLOCK) ||
++          g_error_matches (error, G_IO_ERROR, G_IO_ERROR_TIMED_OUT))
+         BIO_set_retry_write (bio);
+ 
+       g_clear_error (gbio->write_error);
+@@ -213,7 +218,12 @@ gtls_bio_read (BIO  *bio,
+ 
+   if (read == -1)
+     {
+-      if (g_error_matches (error, G_IO_ERROR, G_IO_ERROR_WOULD_BLOCK))
++      /* A timeout is not fatal for the connection, like with GnuTLS. Do not
++       * let OpenSSL treat it as a transport failure, which would put the
++       * connection into an unrecoverable error state.
++       */
++      if (g_error_matches (error, G_IO_ERROR, G_IO_ERROR_WOULD_BLOCK) ||
++          g_error_matches (error, G_IO_ERROR, G_IO_ERROR_TIMED_OUT))
+         BIO_set_retry_read (bio);
+ 
+       g_clear_error (gbio->read_error);
+diff --git a/tls/openssl/gtlsbio.c b/tls/openssl/gtlsbio.c.orig
+similarity index 100%
+copy from tls/openssl/gtlsbio.c
+copy to tls/openssl/gtlsbio.c.orig
+diff --git a/tls/openssl/gtlsconnection-openssl.c b/tls/openssl/gtlsconnection-openssl.c
+index ee4cb42..fbbea8a 100644
+--- a/tls/openssl/gtlsconnection-openssl.c
++++ b/tls/openssl/gtlsconnection-openssl.c
+@@ -108,7 +108,8 @@ end_openssl_io (GTlsConnectionOpenssl  *openssl,
+ 
+   if ((err_code == SSL_ERROR_WANT_READ ||
+        err_code == SSL_ERROR_WANT_WRITE) &&
+-      blocking)
++      blocking &&
++      status != G_TLS_CONNECTION_BASE_TIMED_OUT)
+     {
+       status = G_TLS_CONNECTION_BASE_TRY_AGAIN;
+       goto out;
+diff --git a/tls/openssl/gtlsconnection-openssl.c b/tls/openssl/gtlsconnection-openssl.c.orig
+similarity index 100%
+copy from tls/openssl/gtlsconnection-openssl.c
+copy to tls/openssl/gtlsconnection-openssl.c.orig
