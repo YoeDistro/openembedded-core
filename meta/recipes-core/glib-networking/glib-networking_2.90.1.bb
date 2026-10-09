@@ -30,6 +30,8 @@ inherit gnomebase gettext upstream-version-is-even gio-module-cache ptest-gnome
 
 SRC_URI += "\
             file://run-ptest \
+            file://0001-tls-tests-connection.c-Ignore-client-close-error-in-.patch \
+            file://0002-openssl-Do-not-treat-socket-timeouts-as-fatal-errors.patch \
             "
 
 FILES:${PN} += "\
