@@ -1,0 +1,40 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Khem Raj <raj.khem@gmail.com>
+Date: Sat, 10 Oct 2026 10:10:22 -0700
+Subject: [PATCH] tests/gdbus-server-auth: Create the long path inside the tmp
+ dir
+
+test_server_path_in_use() builds an over-long socket directory by
+padding g_get_tmp_dir() with 'x' characters, but never adds a directory
+separator. With G_TEST_TMPDIR=/tmp the directory becomes
+
+    /tmpxxxxxxxx...
+
+i.e. a new entry in the root directory, so g_mkdir_with_parents() fails
+with EACCES unless the test runs as root:
+
+    assertion failed (g_mkdir_with_parents (path->str, 0700) == 0): (-1 == 0)
+
+This happens with the installed tests run by an unprivileged user, as
+the OpenEmbedded ptest does. Append a separator so the directory is
+created inside the temporary directory.
+
+Upstream-Status: Pending
+
+Signed-off-by: Khem Raj <raj.khem@gmail.com>
+---
+ gio/tests/gdbus-server-auth.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/gio/tests/gdbus-server-auth.c b/gio/tests/gdbus-server-auth.c
+index def0a74..811d12e 100644
+--- a/gio/tests/gdbus-server-auth.c
++++ b/gio/tests/gdbus-server-auth.c
+@@ -552,6 +552,7 @@ test_server_path_in_use (void)
+   gchar *escaped = NULL;
+ 
+   path = g_string_new (g_get_tmp_dir ());
++  g_string_append_c (path, G_DIR_SEPARATOR);
+   guid = g_dbus_generate_guid ();
+   while (path->len < UNIX_PATH_MAX - 1)
+     g_string_append_c (path, 'x');
