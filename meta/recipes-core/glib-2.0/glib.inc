@@ -235,6 +235,7 @@ SRC_URI += "file://run-ptest \
            file://0010-Do-not-hardcode-python-path-into-various-tools.patch \
            file://skip-timeout.patch \
            file://skip-monotonic-time-similar.patch \
+           file://0001-tests-gdbus-server-auth-Create-the-long-path-inside-.patch \
            "
 SRC_URI:append:class-native = " file://relocate-modules.patch \
                                 file://0001-meson.build-do-not-enable-pidfd-features-on-native-g.patch \
