@@ -35,7 +35,12 @@ RPROVIDES:${PN}-dev += "${@bb.utils.contains("TC_CXX_RUNTIME", "llvm", "libgcc-d
 RPROVIDES:${PN}-dbg += "${@bb.utils.contains("TC_CXX_RUNTIME", "llvm", "libgcc-dbg", "", d)}"
 
 PACKAGECONFIG ??= "${@bb.utils.contains("TC_CXX_RUNTIME", "llvm", "crt", "", d)}"
+PACKAGECONFIG:append:class-target = "${@' libatomic' if d.getVar('LIBATOMIC_PROVIDER') == 'compiler-rt' else ''}"
 PACKAGECONFIG[crt] = "-DCOMPILER_RT_BUILD_CRT:BOOL=ON,-DCOMPILER_RT_BUILD_CRT:BOOL=OFF"
+PACKAGECONFIG[libatomic] = "-DCOMPILER_RT_BUILD_STANDALONE_LIBATOMIC=ON \
+                            -DCOMPILER_RT_LIBATOMIC_LINK_FLAGS=-nostartfiles \
+                            -DCOMPILER_RT_LIBATOMIC_LINK_LIBS_${COMPILER_RT_ARCH}=c, \
+                            -DCOMPILER_RT_BUILD_STANDALONE_LIBATOMIC=OFF,patchelf-native"
 PACKAGECONFIG[profile] = "-DCOMPILER_RT_BUILD_PROFILE=ON,-DCOMPILER_RT_BUILD_PROFILE=OFF"
 # Context Profiling, might need to enable 'profile' too
 PACKAGECONFIG[ctx-profile] = "-DCOMPILER_RT_BUILD_CTX_PROFILE=ON,-DCOMPILER_RT_BUILD_CTX_PROFILE=OFF"
@@ -56,6 +61,8 @@ def get_compiler_rt_arch(bb, d):
     elif bb.utils.contains('TUNE_FEATURES', 'arm vfp callconvention-hard', True, False, d):
         return 'armhf'
     return d.getVar('HOST_ARCH')
+
+COMPILER_RT_ARCH = "${@get_compiler_rt_arch(bb, d)}"
 
 INSTALL_VER ?= "${MAJOR_VER}.${MINOR_VER}.${PATCH_VER}${VER_SUFFIX}"
 INSTALL_VER:class-native = "${@oe.utils.trim_version("${PV}", 1)}"
@@ -115,7 +122,28 @@ do_install:append () {
         ln -sf clang/${INSTALL_VER}/lib/linux/clang_rt.crtend-${@get_compiler_rt_arch(bb, d)}.o ${D}${nonarch_libdir}/crtend.o
         ln -sf clang/${INSTALL_VER}/lib/linux/clang_rt.crtend-${@get_compiler_rt_arch(bb, d)}.o ${D}${nonarch_libdir}/crtendS.o
     fi
+    if ${@bb.utils.contains('PACKAGECONFIG', 'libatomic', 'true', 'false', d)}; then
+        # Install libatomic with the same names and layout as gcc-runtime
+        install -d ${D}${libdir}
+        mv ${D}${nonarch_libdir}/clang/${INSTALL_VER}/lib/linux/libclang_rt.atomic-${COMPILER_RT_ARCH}.so \
+           ${D}${libdir}/libatomic.so.1.2.0
+        patchelf --set-soname libatomic.so.1 ${D}${libdir}/libatomic.so.1.2.0
+        ln -sf libatomic.so.1.2.0 ${D}${libdir}/libatomic.so.1
+        ln -sf libatomic.so.1.2.0 ${D}${libdir}/libatomic.so
+        ${AR} rcs ${D}${libdir}/libatomic.a \
+            ${B}/compiler-rt/lib/builtins/CMakeFiles/clang_rt.atomic*-${COMPILER_RT_ARCH}.dir/atomic.c.o
+        ln -sf libatomic.a ${D}${libdir}/libatomic_asneeded.a
+        # gcc links -latomic_asneeded by default
+        printf '/* GNU ld script\n   Add DT_NEEDED entry for -latomic only if needed.  */\nINPUT ( AS_NEEDED ( -latomic ) )\n' \
+            > ${D}${libdir}/libatomic_asneeded.so
+    fi
 }
+
+PACKAGES =+ "${@bb.utils.contains('PACKAGECONFIG', 'libatomic', 'libatomic libatomic-dev libatomic-staticdev', '', d)}"
+SUMMARY:libatomic = "C11/C++11 atomics support library from compiler-rt"
+FILES:libatomic = "${libdir}/libatomic.so.*"
+FILES:libatomic-dev = "${libdir}/libatomic.so ${libdir}/libatomic_asneeded.so"
+FILES:libatomic-staticdev = "${libdir}/libatomic.a ${libdir}/libatomic_asneeded.a"
 
 FILES:${PN} += "${nonarch_libdir}/clang/${INSTALL_VER}/lib/linux/lib*${SOLIBSDEV} \
                 ${nonarch_libdir}/clang/${INSTALL_VER}/*.txt \
