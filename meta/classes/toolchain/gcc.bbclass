@@ -17,6 +17,8 @@ READELF = "${HOST_PREFIX}readelf"
 PREFERRED_PROVIDER_virtual/${MLPREFIX}cross-cc = "${MLPREFIX}gcc-cross-${TARGET_ARCH}"
 PREFERRED_PROVIDER_virtual/${MLPREFIX}cross-c++ = "${MLPREFIX}gcc-cross-${TARGET_ARCH}"
 PREFERRED_PROVIDER_virtual/${MLPREFIX}compilerlibs = "${MLPREFIX}gcc-runtime"
+# libatomic, which gcc links by default, comes from compiler-rt in this case
+BASE_DEFAULT_DEPS:append:class-target = "${@' ${MLPREFIX}compiler-rt' if d.getVar('LIBATOMIC_PROVIDER') == 'compiler-rt' else ''}"
 
 PREFERRED_PROVIDER_virtual/${MLPREFIX}cross-cc:class-nativesdk = "gcc-crosssdk-${SDK_SYS}"
 PREFERRED_PROVIDER_virtual/${MLPREFIX}cross-c++:class-nativesdk = "gcc-crosssdk-${SDK_SYS}"

@@ -47,7 +47,10 @@ RUNTIMELIBITM:loongarch64 = ""
 RUNTIMELIBSSP ?= ""
 RUNTIMELIBSSP:mingw32 ?= "libssp"
 
-RUNTIMETARGET = "${RUNTIMELIBSSP} libstdc++-v3 libgomp libatomic ${RUNTIMELIBITM} \
+# compiler-rt can provide libatomic for the target instead
+RUNTIMELIBATOMIC = "${@'' if d.getVar('LIBATOMIC_PROVIDER') == 'compiler-rt' else 'libatomic'}"
+RUNTIMELIBATOMIC:class-nativesdk = "libatomic"
+RUNTIMETARGET = "${RUNTIMELIBSSP} libstdc++-v3 libgomp ${RUNTIMELIBATOMIC} ${RUNTIMELIBITM} \
     ${@bb.utils.contains('FORTRAN', ',fortran', 'libquadmath', '', d)} \
 "
 # Only build libstdc++ for newlib
@@ -193,9 +196,7 @@ PACKAGES = "\
     libgomp \
     libgomp-dev \
     libgomp-staticdev \
-    libatomic \
-    libatomic-dev \
-    libatomic-staticdev \
+    ${@'${RUNTIMELIBATOMIC} ${RUNTIMELIBATOMIC}-dev ${RUNTIMELIBATOMIC}-staticdev' if d.getVar('RUNTIMELIBATOMIC') else ''} \
     libitm \
     libitm-dev \
     libitm-staticdev \
