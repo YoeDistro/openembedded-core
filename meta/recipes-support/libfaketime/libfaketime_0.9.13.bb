@@ -9,6 +9,7 @@ SRCREV = "86b37fde2fed7336ea2d0c17928e3015a55d9b4a"
 SRC_URI = "git://github.com/wolfcw/libfaketime.git;branch=master;tag=v${PV};protocol=https \
            file://0001-libfaketime.c-do-not-declare-__time64-when-D_TIME_BI.patch \
            file://0001-Mark-write-only-real_-pointers-as-unused.patch \
+           file://0001-Export-unversioned-pthread_cond_-wrappers-without-.s.patch \
 "
 
 # The version script names the symbols that are defined with .symver
