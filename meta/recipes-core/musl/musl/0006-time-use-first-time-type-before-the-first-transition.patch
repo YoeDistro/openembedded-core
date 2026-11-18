@@ -1,0 +1,54 @@
+From fdc1a798a6450803ebc08c3b66518bd8feba1c85 Mon Sep 17 00:00:00 2001
+From: Khem Raj <khem.raj@oss.qualcomm.com>
+Date: Wed, 18 Nov 2026 05:16:17 +0000
+Subject: [PATCH] time: use first time type before the first transition with
+ one transition
+
+scan_trans() checks whether the binary search ended on the last
+transition before it checks whether t lies before the first one. When a
+zoneinfo file has exactly one transition, both are index 0, so times
+before that transition are handled by the POSIX TZ string in the footer
+instead of the lowest-index non-DST type, as RFC 8536 specifies.
+
+"Slim" zoneinfo files, as zic writes by default since tzdata 2020b,
+often have a single transition. For example Antarctica/Troll (footer
+"<+00>0<+02>-2,M3.5.0/1,M10.5.0/3") reported +02 summer time in 1970,
+and Antarctica/Rothera (footer "<-03>3") reported -03 before it was
+founded in 1976, where both should be "-00" with a zero offset.
+
+Check for t before the first transition first.
+
+Upstream-Status: Pending
+Signed-off-by: Khem Raj <khem.raj@oss.qualcomm.com>
+---
+ src/time/__tz.c | 6 ++++--
+ 1 file changed, 4 insertions(+), 2 deletions(-)
+
+diff --git a/src/time/__tz.c b/src/time/__tz.c
+index df57fec1..0f57a1d9 100644
+--- a/src/time/__tz.c
++++ b/src/time/__tz.c
+@@ -288,9 +288,10 @@ static size_t scan_trans(long long t, int local, size_t *alt)
+ 	}
+ 
+ 	/* First and last entry are special. First means to use lowest-index
+-	 * non-DST type. Last means to apply POSIX-style rule if available. */
++	 * non-DST type. Last means to apply POSIX-style rule if available.
++	 * Check for t before the first transition before checking for the
++	 * last entry, since with only one transition they are the same. */
+ 	n = (index-trans)>>scale;
+-	if (a == n-1) return -1;
+ 	if (a == 0) {
+ 		x = zi_read32(trans);
+ 		if (scale == 3) x = x<<32 | zi_read32(trans + 4);
+@@ -308,6 +309,7 @@ static size_t scan_trans(long long t, int local, size_t *alt)
+ 			return j/6;
+ 		}
+ 	}
++	if (a == n-1) return -1;
+ 
+ 	/* Try to find a neighboring opposite-DST-status rule. */
+ 	if (alt) {
+-- 
+2.43.0
+

@@ -16,6 +16,7 @@ SRC_URI = "git://git.musl-libc.org/musl;branch=master \
            file://0003-tools-version.sh-fall-back-to-VERSION-when-git-descr.patch \
            file://0004-math-enable-FENV_ACCESS-in-expm1-expm1f-hypot-and-hy.patch \
            file://0005-math-disable-FP-contraction-in-jn.c.patch \
+           file://0006-time-use-first-time-type-before-the-first-transition.patch \
            file://ldd \
           "
 
