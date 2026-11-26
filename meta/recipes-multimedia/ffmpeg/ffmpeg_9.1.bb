@@ -33,6 +33,10 @@ ARM_INSTRUCTION_SET:armv4 = "arm"
 ARM_INSTRUCTION_SET:armv5 = "arm"
 ARM_INSTRUCTION_SET:armv6 = "arm"
 
+# ASM code for RISCV is not internal assembler ready
+CFLAGS:append:toolchain-clang:riscv64 = " -fno-integrated-as"
+CFLAGS:append:toolchain-clang:riscv32 = " -fno-integrated-as"
+
 # Should be API compatible with libav (which was a fork of ffmpeg)
 PROVIDES = "libav"
 
