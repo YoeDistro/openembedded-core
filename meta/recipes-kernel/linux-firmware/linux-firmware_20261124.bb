@@ -3978,5 +3978,8 @@ INSANE_SKIP += "ldflags"
 # Don't warn about already stripped files
 INSANE_SKIP:${PN} = "already-stripped"
 
+# Some prebuilt Qualcomm firmware embeds paths from the vendor build hosts
+OEQA_BUILDPATHS_SKIP = "/home/scm /home/ubuntu"
+
 # No need to put firmware into the sysroot
 SYSROOT_DIRS_IGNORE += "${firmwaredir}"
