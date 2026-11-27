@@ -32,7 +32,6 @@ CVE_PRODUCT = "sqlite"
 inherit pkgconfig siteinfo upstream-stable-release-point
 
 PACKAGECONFIG ?= "fts4 fts5 rtree dyn_ext unlock-notify"
-PACKAGECONFIG:class-native ?= "fts4 fts5 rtree dyn_ext"
 
 PACKAGECONFIG[editline] = "--enable-editline --with-readline-header=${STAGING_INCDIR}/editline/readline.h,--disable-editline,libedit ncurses"
 PACKAGECONFIG[readline] = "--enable-readline --with-readline-header=${STAGING_INCDIR}/readline/readline.h,--disable-readline,readline ncurses"
