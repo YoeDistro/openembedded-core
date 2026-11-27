@@ -32,6 +32,7 @@ RDEPENDS:${PN}-ptest += " \
     gcc-symlinks \
     g++-symlinks \
 "
+RDEPENDS:${PN}-ptest:append:toolchain-clang = " clang"
 
 INSANE_SKIP:${PN}-ptest = "dev-deps"
 
