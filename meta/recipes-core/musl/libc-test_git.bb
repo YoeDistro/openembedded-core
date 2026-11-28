@@ -9,17 +9,18 @@ LIC_FILES_CHKSUM = "file://COPYRIGHT;md5=43ed1245085be90dc934288117d55a3b"
 
 inherit ptest
 
-SRCREV = "f2bac7711bec93467b73bec1465579ea0b8d5071"
+SRCREV = "63e36e934e8f2bedf645303a90b64098e2af6c8f"
 SRC_URI = " \
     git://repo.or.cz/libc-test;branch=master;protocol=https \
     file://0001-Fix-strptime-on-musl.patch \
     file://0001-api-unistd-guard-optional-obsolete-_PC-_SC-constants.patch \
-    file://0001-math-Delete-failing-tests.patch \
     file://run-ptest \
     file://run-libc-ptests \
 "
 
 PV = "0+git"
+
+UPSTREAM_CHECK_COMMITS = "1"
 
 # libc-test 'make' or 'make run' command is designed to build and run tests. It
 # reports both build and test failures. The commands should be run on target.
@@ -43,6 +44,10 @@ RDEPENDS:${PN}-ptest = " \
      tzdata \
 "
 
+# Tests that fail on musl: fenv issues (math) and bugs not fixed yet
+LIBC_TEST_EXCLUDE ?= "math/fma math/fmaf math/fmal math/powf \
+                      functional/wordexp regression/regex-backref-oob regression/regexec-backref"
+
 install_path = "/opt/${PN}"
 FILES:${PN} += "${install_path}/*"
 
@@ -50,6 +55,7 @@ do_install () {
     install -d ${D}${install_path}/
     cp ${S}/Makefile ${D}${install_path}
     cp ${S}/config.mak.def ${D}${install_path}/config.mak
+    echo 'NAMES:=$(filter-out ${LIBC_TEST_EXCLUDE},$(NAMES))' >> ${D}${install_path}/config.mak
     cp -r ${S}/src ${D}${install_path}
 }
 
