@@ -22,6 +22,8 @@ SRC_URI = "\
 "
 SRCREV = "be08ba2be2a964edcdb3d3e3ea8d100abc26f286"
 
+UPSTREAM_CHECK_GITTAGREGEX = "^v(?P<pver>\d+(\.\d+)+)$"
+
 inherit cmake ptest
 
 CXXFLAGS:append:toolchain-clang = " -Wno-error=c2y-extensions"
