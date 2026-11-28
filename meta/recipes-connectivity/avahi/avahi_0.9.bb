@@ -30,6 +30,9 @@ SRC_URI = "git://github.com/avahi/avahi;protocol=https;branch=master;tag=v0.9-rc
 PV = "0.9~rc5"
 SRCREV = "71b640e686964efb27cb708f4457ffaed183c319"
 
+# The git tag check skips -rc tags and there is no 0.9 release yet
+UPSTREAM_VERSION_UNKNOWN = "1"
+
 GITHUB_BASE_URI = "https://github.com/avahi/avahi/releases/"
 
 CVE_STATUS[CVE-2021-26720] = "not-applicable-platform: Issue only affects Debian/SUSE"
