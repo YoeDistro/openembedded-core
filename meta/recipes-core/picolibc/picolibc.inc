@@ -14,5 +14,6 @@ BASEVER = "1.8.11"
 PV = "${BASEVER}+git"
 SRC_URI = "git://github.com/picolibc/picolibc.git;protocol=https;branch=main"
 SRCREV = "f7edb0869e64b9d687f46961adeef7154921fe92"
+UPSTREAM_CHECK_GITTAGREGEX = "^(?P<pver>\d+(\.\d+)+)$"
 
 B = "${WORKDIR}/build"
