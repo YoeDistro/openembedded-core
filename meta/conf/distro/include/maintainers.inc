@@ -572,7 +572,6 @@ RECIPE_MAINTAINER:pn-nfs-utils = "Peyman Jahangirlou <peyman.jahangirlou@windriv
 RECIPE_MAINTAINER:pn-nghttp2 = "Unassigned <unassigned@yoctoproject.org>"
 RECIPE_MAINTAINER:pn-ninja = "Khem Raj <raj.khem@gmail.com>"
 RECIPE_MAINTAINER:pn-npth = "Unassigned <unassigned@yoctoproject.org>"
-RECIPE_MAINTAINER:pn-nss-myhostname = "Unassigned <unassigned@yoctoproject.org>"
 RECIPE_MAINTAINER:pn-numactl = "Richard Purdie <richard.purdie@linuxfoundation.org>"
 RECIPE_MAINTAINER:pn-ofono = "Ross Burton <ross.burton@arm.com>"
 RECIPE_MAINTAINER:pn-openmp = "Khem Raj <raj.khem@gmail.com>"
