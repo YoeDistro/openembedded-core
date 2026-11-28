@@ -5,6 +5,8 @@ LIC_FILES_CHKSUM = "file://LICENSE;md5=6399094fbc639a289cfca2d660c010aa"
 
 GITHUB_BASE_URI = "https://github.com/pantoniou/libfyaml/releases"
 UPSTREAM_CHECK_REGEX ?= "releases/tag/v?(?P<pver>\d+(\.\d+)+)$"
+# The releases page only shows 1.0.0 pre-releases until 1.0.0 is out
+UPSTREAM_VERSION_UNKNOWN = "1"
 SRC_URI = "${GITHUB_BASE_URI}/download/v${PV}/libfyaml-${PV}.tar.gz \
            file://0001-Fix-32-bit-build-by-removing-stray-parameter-to-fy_s.patch \
            file://0002-vlsize-Handle-decoding-when-size_t-sizeof-uint64_t.patch \
