@@ -18,6 +18,7 @@ BASEVER = "4.6.0"
 PV = "${BASEVER}+git"
 SRC_URI = "git://sourceware.org/git/newlib-cygwin.git;protocol=https;branch=main"
 SRCREV = "8ba4275b83ec27529f67e0d477611fa6d8d6e6bd"
+UPSTREAM_CHECK_GITTAGREGEX = "^newlib-(?P<pver>\d+([._]\d+)+)$"
 
 INHIBIT_DEFAULT_DEPS = "1"
 DEPENDS = "virtual/cross-cc"
